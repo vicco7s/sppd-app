@@ -2,9 +2,16 @@
 
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [show, setShow] = useState(false);
+  const router = useRouter();
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    router.push('/dashbord/dashuser');
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-yellow-500 via-yellow-400 to-blue-800 p-6">
@@ -13,7 +20,7 @@ export default function LoginPage() {
 
         <h2 className="text-2xl font-semibold text-gray-800 mb-6">Log in</h2>
 
-        <form className="space-y-4">
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
             <label className="nip text-black">Nip/Nik</label>
             <div className="flex items-center bg-white rounded-full px-4 py-3 shadow-sm">
