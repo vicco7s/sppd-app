@@ -1,17 +1,21 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Send, Sparkles, Zap, ZapOff } from 'lucide-react';
 import { db, model } from "@/services/firebases";
-import { collection, getDocs, doc, setDoc, query, where } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, updateDoc, query, where } from "firebase/firestore";
 import toast from "react-hot-toast";
 
-const CreatePerjadin = () => {
+const EditPerjadinPage = () => {
   const router = useRouter();
+  const params = useParams();
+  const id = params.id;
+  
   const [pegawaiList, setPegawaiList] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAutoSpt, setIsAutoSpt] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     id: '',
@@ -38,7 +42,6 @@ const CreatePerjadin = () => {
     hasil: '',
     kesimpulan: '',
     saran: '',
-    status:'Menunggu'
   });
 
   // Ambil data pegawai dari Firestore
@@ -57,6 +60,59 @@ const CreatePerjadin = () => {
     };
     fetchPegawai();
   }, []);
+
+  // Ambil data perjadin berdasarkan ID
+  useEffect(() => {
+    const fetchPerjadinData = async () => {
+      if (!id) return;
+      
+      try {
+        setIsLoading(true);
+        const docRef = doc(db, "perjadinkota", id);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setFormData({
+            id: docSnap.id,
+            idPegawai: data.idPegawai || '',
+            no: data.no || 0,
+            noSpt: data.noSpt || '',
+            noSpd: data.noSpd || '',
+            nama: data.nama || '',
+            namaPengikut: data.namaPengikut || [],
+            tujuan: data.tujuan || '',
+            tanggal: data.tanggal || '',
+            suratDari: data.suratDari || '',
+            tanggalSurat: data.tanggalSurat || '',
+            tanggalBerangkat: data.tanggalBerangkat || '',
+            tanggalKembali: data.tanggalKembali || '',
+            perihalSurat: data.perihalSurat || '',
+            hari: data.hari || 0,
+            uangHarian: data.uangHarian || 0,
+            transport: data.transport || 0,
+            total: data.total || 0,
+            untuk: data.untuk || '',
+            keterangan: data.keterangan || '',
+            kegiatan: data.kegiatan || '',
+            hasil: data.hasil || '',
+            kesimpulan: data.kesimpulan || '',
+            saran: data.saran || '',
+          });
+        } else {
+          toast.error("Data tidak ditemukan!");
+          router.push('/dashbord/dashuser');
+        }
+      } catch (error) {
+        console.error("Error fetching perjadin data:", error);
+        toast.error("Gagal memuat data!");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchPerjadinData();
+  }, [id, router]);
 
   {/* hitung hari & total otomatis */ }
   useEffect(() => {
@@ -144,13 +200,20 @@ const CreatePerjadin = () => {
       return;
     }
 
-    // Cek apakah nomor sudah ada di database
+    // Cek apakah nomor sudah ada di database (kecuali untuk dokumen ini sendiri)
     try {
       const q = query(collection(db, "perjadinkota"), where("no", "==", formData.no));
       const querySnapshot = await getDocs(q);
+      
+      let isDuplicate = false;
+      querySnapshot.forEach((doc) => {
+        if (doc.id !== id) {
+          isDuplicate = true;
+        }
+      });
 
-      if (!querySnapshot.empty) {
-        toast.error(`Nomor ${formData.no} sudah ada! Harap gunakan nomor lain.`);
+      if (isDuplicate) {
+        toast.error(`Nomor ${formData.no} sudah digunakan oleh data lain! Harap gunakan nomor lain.`);
         setIsSubmitting(false);
         return;
       }
@@ -162,28 +225,21 @@ const CreatePerjadin = () => {
     }
 
     try {
-      // Buat referensi dokumen baru dengan ID otomatis
-      const newDocRef = doc(collection(db, "perjadinkota"));
-
-      // Simpan data ke Firestore dengan menyertakan ID dokumen
-      await setDoc(newDocRef, {
+      // Update data di Firestore
+      const docRef = doc(db, "perjadinkota", id);
+      await updateDoc(docRef, {
         ...formData,
-        id: newDocRef.id, // Menyimpan ID dokumen ke dalam field 'id'
-        createdAt: new Date(),
         updatedAt: new Date()
       });
 
-      toast.success("Data berhasil disimpan!");
+      toast.success("Data berhasil diperbarui!");
       setIsSubmitting(false);
 
       // Redirect ke halaman dashboard
       router.push('/dashbord/dashuser');
-
-      // Reset form option:
-      // setFormData({...}); 
     } catch (error) {
-      console.error("Error saving document: ", error);
-      toast.error("Gagal menyimpan data. Silakan coba lagi.");
+      console.error("Error updating document: ", error);
+      toast.error("Gagal memperbarui data. Silakan coba lagi.");
       setIsSubmitting(false);
     }
   };
@@ -248,6 +304,17 @@ const CreatePerjadin = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto"></div>
+          <p className="mt-4 text-gray-600">Memuat data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 text-gray-900">
       <div className="max-w-3xl mx-auto">
@@ -262,8 +329,8 @@ const CreatePerjadin = () => {
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-50">
-            <h1 className="text-2xl font-bold text-gray-900">Formulir Perjalanan Dinas</h1>
-            <p className="text-sm text-gray-500 mt-1">Lengkapi data di bawah ini untuk membuat pengajuan baru.</p>
+            <h1 className="text-2xl font-bold text-gray-900">Edit Perjalanan Dinas</h1>
+            <p className="text-sm text-gray-500 mt-1">Perbarui data perjalanan dinas di bawah ini.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -495,7 +562,7 @@ const CreatePerjadin = () => {
                   </label>
                   <input
                     type="date"
-                    name="tanggalBerangkat"   // ✅ FIX
+                    name="tanggalBerangkat"
                     value={formData.tanggalBerangkat}
                     onChange={handleChange}
                     className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
@@ -509,7 +576,7 @@ const CreatePerjadin = () => {
                   </label>
                   <input
                     type="date"
-                    name="tanggalKembali"   // ✅ FIX
+                    name="tanggalKembali"
                     value={formData.tanggalKembali}
                     onChange={handleChange}
                     className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
@@ -675,12 +742,12 @@ const CreatePerjadin = () => {
                 {isSubmitting ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                    Menyimpan...
+                    Memperbarui...
                   </>
                 ) : (
                   <>
                     <Send size={18} className="mr-2" />
-                    Simpan Data
+                    Perbarui Data
                   </>
                 )}
               </button>
@@ -692,4 +759,4 @@ const CreatePerjadin = () => {
   );
 };
 
-export default CreatePerjadin;
+export default EditPerjadinPage;

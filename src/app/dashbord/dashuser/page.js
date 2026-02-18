@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Bell, ChevronDown, ChevronRight, LogOut, User } from "lucide-react";
+import { Bell, ChevronDown, ChevronRight, LogOut, User, Edit, Trash2, Printer } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { auth } from "@/services/firebases";
+import { auth, db } from "@/services/firebases";
 import { signOut, onAuthStateChanged } from "firebase/auth";
+import { collection, getDocs, deleteDoc, doc, query, orderBy } from "firebase/firestore";
 import { toast } from "react-hot-toast";
 
 export default function DashuserPage() {
@@ -14,6 +15,10 @@ export default function DashuserPage() {
   const [activeTab, setActiveTab] = useState("overview"); // State to manage active content in main area
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const [perjadinList, setPerjadinList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (u) => {
@@ -22,13 +27,51 @@ export default function DashuserPage() {
     return () => unsubscribeAuth();
   }, []);
 
- 
-  {/* Fungsi Dropdown profil */}
+  // Fetch Data Perjadin
+  useEffect(() => {
+    const fetchData = async () => {
+      if (activeTab === "perjadin-umum-dalam-kota") {
+        setLoading(true);
+        try {
+          const q = query(collection(db, "perjadinkota"), orderBy("createdAt", "desc"));
+          const querySnapshot = await getDocs(q);
+          const data = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          setPerjadinList(data);
+        } catch (error) {
+          console.error("Error fetching data:", error);
+          toast.error("Gagal mengambil data perjadin");
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchData();
+  }, [activeTab]);
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Apakah Anda yakin ingin menghapus data ini?")) {
+      try {
+        await deleteDoc(doc(db, "perjadinkota", id));
+        setPerjadinList(prev => prev.filter(item => item.id !== id));
+        toast.success("Data berhasil dihapus");
+      } catch (error) {
+        console.error("Error deleting document:", error);
+        toast.error("Gagal menghapus data");
+      }
+    }
+  };
+
+
+  {/* Fungsi Dropdown profil */ }
   const profileRef = useRef(null);
 
   useEffect(() => {
     function handleClickOutside(e) {
-      
+
       if (profileRef.current && !profileRef.current.contains(e.target)) {
         setOpenProfile(false);
       }
@@ -37,6 +80,16 @@ export default function DashuserPage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Pagination logic
+  const totalPages = Math.ceil(perjadinList.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedData = perjadinList.slice(startIndex, endIndex);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 flex">
@@ -51,7 +104,7 @@ export default function DashuserPage() {
         </div>
 
         <nav className="space-y-3 text-sm mb-4">
-          <button 
+          <button
             onClick={() => setActiveTab("overview")}
             className={`w-full text-left flex items-center gap-3 p-2 rounded hover:bg-gray-100 ${activeTab === 'overview' ? 'bg-gray-100 font-semibold' : 'text-gray-800'}`}
           >
@@ -71,13 +124,13 @@ export default function DashuserPage() {
 
             {openPerjadin && (
               <ul className="mt-2 bg-white border border-transparent rounded shadow-sm">
-                <li 
+                <li
                   onClick={() => setActiveTab("berkas-konsul")}
                   className={`px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm focus:outline-none ${activeTab === 'berkas-konsul' ? 'bg-gray-100 font-semibold text-blue-600' : ''}`}
                 >
                   Perjadin Berkas atau Konsul
                 </li>
-                <li 
+                <li
                   onClick={() => setActiveTab("perjadin-umum-dalam-kota")}
                   className={`px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm focus:outline-none ${activeTab === 'perjadin-umum-dalam-kota' ? 'bg-gray-100 font-semibold text-blue-600' : ''}`}
                 >
@@ -180,14 +233,14 @@ export default function DashuserPage() {
               <div className="bg-white p-6 rounded shadow text-gray-800">
                 <div className="flex justify-between items-center mb-6 border-b pb-4">
                   <h2 className="text-xl font-bold text-gray-900">List Data Perjadin Berkas atau Konsul</h2>
-                  <button 
+                  <button
                     onClick={() => router.push("/dashbord/dashuser/Perjadin/create")}
                     className="bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-blue-700 transition shadow-sm font-medium"
                   >
                     <span className="text-lg">+</span> Tambah Perjadin Baru
                   </button>
                 </div>
-                
+
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead className="bg-gray-50">
@@ -209,6 +262,39 @@ export default function DashuserPage() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Pagination Controls */}
+                {perjadinList.length > itemsPerPage && (
+                  <div className="flex justify-center items-center gap-2 mt-6">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="px-3 py-2 rounded border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Sebelumnya
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`px-3 py-2 rounded text-sm font-medium ${
+                          currentPage === page
+                            ? 'bg-blue-600 text-white'
+                            : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-2 rounded border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Selanjutnya
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -217,14 +303,14 @@ export default function DashuserPage() {
               <div className="bg-white p-6 rounded shadow text-gray-800">
                 <div className="flex justify-between items-center mb-6 border-b pb-4">
                   <h2 className="text-xl font-bold text-gray-900">List Data Perjadin Umum Dalam Kota</h2>
-                  <button 
+                  <button
                     onClick={() => router.push("/dashbord/dashuser/Perjadin/create")}
                     className="bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-blue-700 transition shadow-sm font-medium"
                   >
                     <span className="text-lg">+</span> Tambah Perjadin Baru
                   </button>
                 </div>
-                
+
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead className="bg-gray-50">
@@ -239,14 +325,100 @@ export default function DashuserPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td colSpan="6" className="px-4 py-10 text-center text-gray-500 italic border-b">
-                          Belum ada data perjadin. Silahkan tambah data baru.
-                        </td>
-                      </tr>
+                      {loading ? (
+                        <tr>
+                          <td colSpan="7" className="px-4 py-10 text-center text-gray-500 italic border-b">
+                            Memuat data...
+                          </td>
+                        </tr>
+                      ) : perjadinList.length === 0 ? (
+                        <tr>
+                          <td colSpan="7" className="px-4 py-10 text-center text-gray-500 italic border-b">
+                            Belum ada data perjadin. Silahkan tambah data baru.
+                          </td>
+                        </tr>
+                      ) : (
+                        paginatedData.map((item, index) => (
+                          <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-4 py-3 border-b text-sm text-gray-700">{item.no}</td>
+                            <td className="px-4 py-3 border-b text-sm text-gray-700">{item.noSpt}</td>
+                            <td className="px-4 py-3 border-b text-sm text-gray-700">{item.tujuan}</td>
+                            <td className="px-4 py-3 border-b text-sm text-gray-700">{item.tanggalBerangkat}</td>
+                            <td className="px-4 py-3 border-b text-sm text-gray-700">{item.perihalSurat}</td>
+                            <td className="px-4 py-3 border-b text-sm">
+                              <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                item.status === 'Selesai' 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : item.status === 'Ditolak'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {item.status || 'Menunggu'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 border-b text-sm text-center">
+                              <div className="flex items-center justify-center gap-2">
+                                <button
+                                  onClick={() => router.push(`/dashbord/dashuser/Perjadin/edit/${item.id}`)}
+                                  className="text-blue-600 hover:text-blue-800 p-1"
+                                  title="Edit"
+                                >
+                                  <Edit size={16} />
+                                </button>
+                                <button
+                                  className="text-green-600 hover:text-green-800 p-1"
+                                  title="Print"
+                                >
+                                  <Printer size={16} />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(item.id)}
+                                  className="text-red-600 hover:text-red-800 p-1"
+                                  title="Hapus"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
+
+                {/* Pagination Controls */}
+                {perjadinList.length > itemsPerPage && (
+                  <div className="flex justify-center items-center gap-2 mt-6">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="px-3 py-2 rounded border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Sebelumnya
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`px-3 py-2 rounded text-sm font-medium ${
+                          currentPage === page
+                            ? 'bg-blue-600 text-white'
+                            : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-2 rounded border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Selanjutnya
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
