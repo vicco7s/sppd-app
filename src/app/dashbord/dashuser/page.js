@@ -7,6 +7,7 @@ import { auth, db } from "@/services/firebases";
 import { signOut, onAuthStateChanged } from "firebase/auth";
 import { collection, getDocs, deleteDoc, doc, query, orderBy } from "firebase/firestore";
 import { toast } from "react-hot-toast";
+import { generateSPPD } from "@/lib/pdf/perjadinkota/page";
 
 export default function DashuserPage() {
   const [openPerjadin, setOpenPerjadin] = useState(false);
@@ -62,6 +63,19 @@ export default function DashuserPage() {
         console.error("Error deleting document:", error);
         toast.error("Gagal menghapus data");
       }
+    }
+  };
+
+  const handlePrint = async (item) => {
+    try {
+      toast.loading("Generating SPPD PDF...", { id: "sppd-loading" });
+      await generateSPPD(item);
+      toast.dismiss("sppd-loading");
+      toast.success("SPPD PDF berhasil dibuat!");
+    } catch (error) {
+      toast.dismiss("sppd-loading");
+      console.error("Error generating SPPD PDF:", error);
+      toast.error("Gagal membuat SPPD PDF");
     }
   };
 
@@ -277,11 +291,10 @@ export default function DashuserPage() {
                       <button
                         key={page}
                         onClick={() => handlePageChange(page)}
-                        className={`px-3 py-2 rounded text-sm font-medium ${
-                          currentPage === page
-                            ? 'bg-blue-600 text-white'
-                            : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                        }`}
+                        className={`px-3 py-2 rounded text-sm font-medium ${currentPage === page
+                          ? 'bg-blue-600 text-white'
+                          : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                          }`}
                       >
                         {page}
                       </button>
@@ -346,13 +359,12 @@ export default function DashuserPage() {
                             <td className="px-4 py-3 border-b text-sm text-gray-700">{item.tanggalBerangkat}</td>
                             <td className="px-4 py-3 border-b text-sm text-gray-700">{item.perihalSurat}</td>
                             <td className="px-4 py-3 border-b text-sm">
-                              <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                                item.status === 'Selesai' 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : item.status === 'Ditolak'
+                              <span className={`text-xs px-2 py-1 rounded-full font-medium ${item.status === 'Selesai'
+                                ? 'bg-green-100 text-green-800'
+                                : item.status === 'Ditolak'
                                   ? 'bg-red-100 text-red-800'
                                   : 'bg-yellow-100 text-yellow-800'
-                              }`}>
+                                }`}>
                                 {item.status || 'Menunggu'}
                               </span>
                             </td>
@@ -366,6 +378,7 @@ export default function DashuserPage() {
                                   <Edit size={16} />
                                 </button>
                                 <button
+                                  onClick={() => handlePrint(item)}
                                   className="text-green-600 hover:text-green-800 p-1"
                                   title="Print"
                                 >
@@ -401,11 +414,10 @@ export default function DashuserPage() {
                       <button
                         key={page}
                         onClick={() => handlePageChange(page)}
-                        className={`px-3 py-2 rounded text-sm font-medium ${
-                          currentPage === page
-                            ? 'bg-blue-600 text-white'
-                            : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                        }`}
+                        className={`px-3 py-2 rounded text-sm font-medium ${currentPage === page
+                          ? 'bg-blue-600 text-white'
+                          : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                          }`}
                       >
                         {page}
                       </button>
