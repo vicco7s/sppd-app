@@ -3,6 +3,7 @@ import { db } from "@/services/firebases";
 import { doc, getDoc } from "firebase/firestore";
 import { drawSPTLayout } from "./spt";
 import { drawSPDLayout } from "./spd";
+import { drawRincianLayout } from "./rincian";
 
 /**
  * Ambil data pegawai dari Firestore berdasarkan ID
@@ -18,7 +19,7 @@ async function fetchPegawai(id) {
 }
 
 /**
- * Generate gabungan SPT + SPD dalam 1 PDF (2 halaman)
+ * Generate gabungan SPT + SPD + Rincian dalam 1 PDF
  * @param {Object} data - Perjadin data dari Firebase
  */
 export async function generateSPPD(data) {
@@ -47,6 +48,19 @@ export async function generateSPPD(data) {
     // ========== HALAMAN 2: SPD ==========
     pdfDoc.addPage([215, 330]);
     await drawSPDLayout(pdfDoc, data, pegawaiUtama, pengikutList);
+
+    // ========== HALAMAN 3: Rincian (Utama) ==========
+    pdfDoc.addPage([215, 330]);
+    await drawRincianLayout(pdfDoc, data, pegawaiUtama, [pegawaiUtama], true);
+
+    // ========== HALAMAN 4+: Rincian (Pengikut) ==========
+    if (pengikutList.length > 0) {
+        for (const p of pengikutList) {
+            pdfDoc.addPage([215, 330]);
+            // Generate rincian untuk setiap pengikut secara individual
+            await drawRincianLayout(pdfDoc, data, p, [p], false);
+        }
+    }
 
     // ========== OUTPUT ==========
     const pdfBlob = pdfDoc.output("blob");

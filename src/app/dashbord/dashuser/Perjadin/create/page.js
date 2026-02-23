@@ -433,12 +433,13 @@ const CreatePerjadin = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Surat Dari</label>
-                  <input
+                  <textarea
                     type="text"
                     name="suratDari"
+                    rows={4}
                     value={formData.suratDari}
                     onChange={handleChange}
-                    placeholder="Surat dari BKAD Tapin Nomor: 900.1.15/021/BKAD-AKT/I/2026"
+                    placeholder="BKAD Tapin Nomor: 900.1.15/021/BKAD-AKT/I/2026"
                     className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                   />
                 </div>
@@ -454,12 +455,13 @@ const CreatePerjadin = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Perihal</label>
-                  <input
+                  <textarea
                     type="text"
                     name="perihalSurat"
+                    rows={4}
                     value={formData.perihalSurat}
                     onChange={handleChange}
-                    placeholder="Entry Jurnal"
+                    placeholder="undangan rapat ...."
                     className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                   />
                 </div>
@@ -473,7 +475,7 @@ const CreatePerjadin = () => {
                 name="untuk"
                 value={formData.untuk}
                 onChange={handleChange}
-                rows="2"
+                rows="6"
                 placeholder="Tujuan utama perjalanan dinas buat sedetail detailnya"
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-none"
               ></textarea>
@@ -579,7 +581,7 @@ const CreatePerjadin = () => {
                 value={formData.keterangan}
                 onChange={handleChange}
                 rows="4"
-                placeholder="Jelaskan Keterangan yang akan di buat untuk rincian biaya"
+                placeholder="Jelaskan Keterangan singkat yang akan di buat untuk rincian biaya bila tidak kasih ( - )"
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-none"
               ></textarea>
             </div>

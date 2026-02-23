@@ -265,7 +265,7 @@ const EditPerjadinPage = () => {
 
       Ketentuan:
       - Tulis dalam bentuk paragraf naratif.
-      - Panjang setiap bagian minimal 3 - 5 kalimat.
+      - Panjang setiap bagian minimal 3 - 8 kalimat.
       - Jangan gunakan bullet point.
       - Jangan gunakan markdown.
       - Jangan tambahkan teks penjelasan apapun.
@@ -500,9 +500,10 @@ const EditPerjadinPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Surat Dari</label>
-                  <input
+                  <textarea
                     type="text"
                     name="suratDari"
+                    rows={4}
                     value={formData.suratDari}
                     onChange={handleChange}
                     placeholder="Surat dari BKAD Tapin Nomor: 900.1.15/021/BKAD-AKT/I/2026"
@@ -521,12 +522,14 @@ const EditPerjadinPage = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Perihal</label>
-                  <input
+                  <textarea
                     type="text"
                     name="perihalSurat"
+                    rows={4}
                     value={formData.perihalSurat}
                     onChange={handleChange}
-                    placeholder="Entry Jurnal"
+                    placeholder="undangan rapat ....
+                    "
                     className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                   />
                 </div>
@@ -540,7 +543,7 @@ const EditPerjadinPage = () => {
                 name="untuk"
                 value={formData.untuk}
                 onChange={handleChange}
-                rows="2"
+                rows="6"
                 placeholder="Tujuan utama perjalanan dinas buat sedetail detailnya"
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-none"
               ></textarea>
