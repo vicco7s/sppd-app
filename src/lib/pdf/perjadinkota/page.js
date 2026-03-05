@@ -4,6 +4,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { drawSPTLayout } from "./spt";
 import { drawSPDLayout } from "./spd";
 import { drawRincianLayout } from "./rincian";
+import { drawHasilLayout } from "./hasil";
 
 /**
  * Ambil data pegawai dari Firestore berdasarkan ID
@@ -59,6 +60,18 @@ export async function generateSPPD(data) {
             pdfDoc.addPage([215, 330]);
             // Generate rincian untuk setiap pengikut secara individual
             await drawRincianLayout(pdfDoc, data, p, [p], false);
+        }
+    }
+
+    // ========== HALAMAN HASIL PERJALANAN DINAS (Utama) ==========
+    pdfDoc.addPage([215, 330]);
+    await drawHasilLayout(pdfDoc, data, pegawaiUtama);
+
+    // ========== HALAMAN HASIL PERJALANAN DINAS (Pengikut) ==========
+    if (pengikutList.length > 0) {
+        for (const p of pengikutList) {
+            pdfDoc.addPage([215, 330]);
+            await drawHasilLayout(pdfDoc, data, p);
         }
     }
 
