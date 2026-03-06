@@ -22,7 +22,7 @@ export default function DashuserPage() {
     const [pegawaiList, setPegawaiList] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
+    const itemsPerPage = 5;
 
     // Modal State for Pegawai
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -132,6 +132,24 @@ export default function DashuserPage() {
         }
     };
 
+    {/* Fungsi untuk mengubah status */ }
+    const handleStatusChange = async (itemId, newStatus) => {
+        try {
+            await updateDoc(doc(db, "perjadinkota", itemId), {
+                status: newStatus
+            });
+
+            setPerjadinList(prev => prev.map(item =>
+                item.id === itemId ? { ...item, status: newStatus } : item
+            ));
+
+            toast.success(`Status berhasil diperbarui`);
+        } catch (error) {
+            console.error("Error updating status:", error);
+            toast.error("Gagal memperbarui status");
+        }
+    };
+
 
     {/* Fungsi Dropdown profil */ }
     const profileRef = useRef(null);
@@ -167,7 +185,7 @@ export default function DashuserPage() {
                     <div className="w-10 h-10 bg-blue-600 rounded-full" />
                     <div>
                         <div className="font-bold text-gray-900">Dashboard</div>
-                        <div className="text-sm text-gray-500">User</div>
+                        <div className="text-sm text-gray-500">Admin</div>
                     </div>
                 </div>
 
@@ -382,7 +400,7 @@ export default function DashuserPage() {
                                 </div>
 
                                 {/* Pagination Controls */}
-                                {perjadinList.length > itemsPerPage && (
+                                {currentList.length > itemsPerPage && (
                                     <div className="flex justify-center items-center gap-2 mt-6">
                                         <button
                                             onClick={() => handlePageChange(currentPage - 1)}
@@ -451,7 +469,7 @@ export default function DashuserPage() {
                                 </div>
 
                                 {/* Pagination Controls */}
-                                {perjadinList.length > itemsPerPage && (
+                                {currentList.length > itemsPerPage && (
                                     <div className="flex justify-center items-center gap-2 mt-6">
                                         <button
                                             onClick={() => handlePageChange(currentPage - 1)}
@@ -532,14 +550,20 @@ export default function DashuserPage() {
                                                         <td className="px-4 py-3 border-b text-sm text-gray-700">{item.tanggalBerangkat}</td>
                                                         <td className="px-4 py-3 border-b text-sm text-gray-700">{item.perihalSurat}</td>
                                                         <td className="px-4 py-3 border-b text-sm">
-                                                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${item.status === 'Selesai'
-                                                                ? 'bg-green-100 text-green-800'
-                                                                : item.status === 'Ditolak'
-                                                                    ? 'bg-red-100 text-red-800'
-                                                                    : 'bg-yellow-100 text-yellow-800'
-                                                                }`}>
-                                                                {item.status || 'Menunggu'}
-                                                            </span>
+                                                            <select
+                                                                value={item.status || 'Menunggu'}
+                                                                onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                                                                className={`text-xs px-2 py-1 rounded-full font-medium focus:outline-none cursor-pointer border-none transition-colors ${item.status === 'Selesai'
+                                                                    ? 'bg-green-100 text-green-800'
+                                                                    : item.status === 'Ditolak'
+                                                                        ? 'bg-red-100 text-red-800'
+                                                                        : 'bg-yellow-100 text-yellow-800'
+                                                                    }`}
+                                                            >
+                                                                <option value="Menunggu">Menunggu</option>
+                                                                <option value="Selesai">Success</option>
+                                                                <option value="Ditolak">Tolak</option>
+                                                            </select>
                                                         </td>
                                                         <td className="px-4 py-3 border-b text-sm text-center">
                                                             <div className="flex items-center justify-center gap-2">
@@ -574,7 +598,7 @@ export default function DashuserPage() {
                                 </div>
 
                                 {/* Pagination Controls */}
-                                {perjadinList.length > itemsPerPage && (
+                                {currentList.length > itemsPerPage && (
                                     <div className="flex justify-center items-center gap-2 mt-6">
                                         <button
                                             onClick={() => handlePageChange(currentPage - 1)}
