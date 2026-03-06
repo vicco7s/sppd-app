@@ -8,8 +8,10 @@ import { signOut, onAuthStateChanged } from "firebase/auth";
 import { collection, getDocs, deleteDoc, doc, query, orderBy, getDoc } from "firebase/firestore";
 import { toast } from "react-hot-toast";
 import { generateSPPD } from "@/lib/pdf/perjadinkota/page";
+import { useInactivityLogout, clearAuthCache } from "@/hooks/useInactivityLogout";
 
 export default function DashuserPage() {
+  useInactivityLogout(1800000); // 30 minutes auto logout
   const [openPerjadin, setOpenPerjadin] = useState(false);
   const [openPerjadinLuar, setOpenPerjadinLuar] = useState(false);
   const [openProfile, setOpenProfile] = useState(false);
@@ -230,7 +232,8 @@ export default function DashuserPage() {
                     onClick={async () => {
                       try {
                         await signOut(auth);
-                        router.push("/login");
+                        clearAuthCache();
+                        router.replace("/login");
                       } catch (err) {
                         console.error("Logout gagal", err);
                         toast.error("Logout Gagal");

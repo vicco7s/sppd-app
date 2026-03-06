@@ -10,8 +10,10 @@ import { toast } from "react-hot-toast";
 import { generateSPPD } from "@/lib/pdf/perjadinkota/page";
 import PegawaiModal from "@/components/PegawaiModal";
 import { updateDoc, getDoc } from "firebase/firestore";
+import { useInactivityLogout, clearAuthCache } from "@/hooks/useInactivityLogout";
 
 export default function DashadminPage() {
+    useInactivityLogout(1800000); // 30 minutes auto logout
     const [openPerjadin, setOpenPerjadin] = useState(false);
     const [openPerjadinLuar, setOpenPerjadinLuar] = useState(false);
     const [openProfile, setOpenProfile] = useState(false);
@@ -312,7 +314,8 @@ export default function DashadminPage() {
                                         onClick={async () => {
                                             try {
                                                 await signOut(auth);
-                                                router.push("/login");
+                                                clearAuthCache();
+                                                router.replace("/login");
                                             } catch (err) {
                                                 console.error("Logout gagal", err);
                                                 toast.error("Logout Gagal");
