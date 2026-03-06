@@ -9,9 +9,9 @@ import { collection, getDocs, deleteDoc, doc, query, orderBy, addDoc, serverTime
 import { toast } from "react-hot-toast";
 import { generateSPPD } from "@/lib/pdf/perjadinkota/page";
 import PegawaiModal from "@/components/PegawaiModal";
-import { updateDoc } from "firebase/firestore";
+import { updateDoc, getDoc } from "firebase/firestore";
 
-export default function DashuserPage() {
+export default function DashadminPage() {
     const [openPerjadin, setOpenPerjadin] = useState(false);
     const [openPerjadinLuar, setOpenPerjadinLuar] = useState(false);
     const [openProfile, setOpenProfile] = useState(false);
@@ -30,8 +30,27 @@ export default function DashuserPage() {
     const [selectedPegawai, setSelectedPegawai] = useState(null); // null means "Add", object means "Edit"
 
     useEffect(() => {
-        const unsubscribeAuth = onAuthStateChanged(auth, (u) => {
-            setUser(u);
+        const unsubscribeAuth = onAuthStateChanged(auth, async (u) => {
+            if (u) {
+                setUser(u);
+                // Verify role
+                try {
+                    const userDoc = await getDoc(doc(db, "user", u.uid));
+                    if (userDoc.exists()) {
+                        const role = userDoc.data().role;
+                        if (role !== "admin") {
+                            router.replace("/dashbord/dashuser");
+                        }
+                    } else {
+                        router.replace("/login");
+                    }
+                } catch (err) {
+                    console.error("Auth error:", err);
+                    router.replace("/login");
+                }
+            } else {
+                router.replace("/login");
+            }
         });
         return () => unsubscribeAuth();
     }, []);

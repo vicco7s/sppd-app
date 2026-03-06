@@ -14,8 +14,32 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start as true to check auth first
   const [error, setError] = useState("");
+
+  // Check if user is already logged in
+  useState(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        // User is already signed in, check role and redirect
+        try {
+          const userDoc = await getDoc(doc(db, "user", user.uid));
+          if (userDoc.exists()) {
+            const role = userDoc.data().role;
+            router.replace(role === "admin" ? "/dashbord/dashadmin" : "/dashbord/dashuser");
+          } else {
+            router.replace("/dashbord/dashuser");
+          }
+        } catch (err) {
+          console.error("Error fetching user role:", err);
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
 
   {/* Fungsi Submit Login */ }
@@ -34,12 +58,12 @@ export default function LoginPage() {
       if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
         if (userData.role === "admin") {
-          router.push("/dashbord/dashadmin");
+          router.replace("/dashbord/dashadmin");
         } else {
-          router.push("/dashbord/dashuser");
+          router.replace("/dashbord/dashuser");
         }
       } else {
-        router.push("/dashbord/dashuser");
+        router.replace("/dashbord/dashuser");
       }
     } catch (err) {
       toast.error("Email atau password salah");

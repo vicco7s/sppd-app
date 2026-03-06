@@ -5,7 +5,7 @@ import { Bell, ChevronDown, ChevronRight, LogOut, User, Edit, Trash2, Printer } 
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/services/firebases";
 import { signOut, onAuthStateChanged } from "firebase/auth";
-import { collection, getDocs, deleteDoc, doc, query, orderBy } from "firebase/firestore";
+import { collection, getDocs, deleteDoc, doc, query, orderBy, getDoc } from "firebase/firestore";
 import { toast } from "react-hot-toast";
 import { generateSPPD } from "@/lib/pdf/perjadinkota/page";
 
@@ -22,8 +22,24 @@ export default function DashuserPage() {
   const itemsPerPage = 10;
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (u) => {
-      setUser(u);
+    const unsubscribeAuth = onAuthStateChanged(auth, async (u) => {
+      if (u) {
+        setUser(u);
+        // Better security: verify if admin is trying to access user dash
+        try {
+          const userDoc = await getDoc(doc(db, "user", u.uid));
+          if (userDoc.exists()) {
+            const role = userDoc.data().role;
+            if (role === "admin") {
+              router.replace("/dashbord/dashadmin");
+            }
+          }
+        } catch (err) {
+          console.error("Auth verify error:", err);
+        }
+      } else {
+        router.replace("/login");
+      }
     });
     return () => unsubscribeAuth();
   }, []);
