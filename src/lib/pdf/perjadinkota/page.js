@@ -1,7 +1,7 @@
 import { jsPDF } from "jspdf";
 import { db } from "@/services/firebases";
 import { doc, getDoc } from "firebase/firestore";
-import { drawSPTLayout } from "./spt";
+import { drawSPTLayout, formatTanggal } from "./spt";
 import { drawSPDLayout } from "./spd";
 import { drawRincianLayout } from "./rincian";
 import { drawHasilLayout } from "./hasil";

@@ -135,13 +135,15 @@ export default function LoginPage() {
         <div className="mt-8 p-4 bg-blue-100/40 rounded-2xl border border-blue-200/50 backdrop-blur-sm">
           <div className="flex items-center gap-2 mb-2 text-blue-900">
             <Bell size={16} className="text-blue-600" />
-            <span className="text-[10px] font-bold uppercase tracking-wider font-semibold">Update Terbaru</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider font-semibold">Update Terbaru 08 Maret 2026</span>
           </div>
           <ul className="text-[11px] text-blue-900/80 space-y-1.5 list-disc list-inside">
-            <li className="leading-tight font-medium">Auto-Logout setelah 30 menit tidak aktif</li>
-            <li className="leading-tight font-medium">Pembersihan Cache & Storage saat Logout</li>
-            <li className="leading-tight font-medium">Manajemen Pegawai baru via Admin Dashboard</li>
-            <li className="leading-tight font-medium">Peningkatan Keamanan Role-Based Access</li>
+            <li className="leading-tight font-medium">Penyesuaian Tampilan Dashboard Admin</li>
+            <li className="leading-tight font-medium">Penyesuaian Tampilan Dashboard User</li>
+            <li className="leading-tight font-medium">Fitur Cetak PDF Nota Dinas (Format F4)</li>
+            <li className="leading-tight font-medium">Dasar SPT Otomatis berdasarkan Arahan Camat</li>
+            <li className="leading-tight font-medium">Format PDF: Rata Kanan-Kiri & Indentasi Paragraf</li>
+            <li className="leading-tight font-medium">Peningkatan Menu Cetak & Navigasi Sidebar</li>
           </ul>
         </div>
 

@@ -159,7 +159,15 @@ export async function drawSPTLayout(pdfDoc, data, pegawaiUtama, pengikutList) {
     // Dasar content
     const dasarIndent = marginLeft + 18;
     const dasarMaxWidth = contentWidth - 18;
-    const dasarText = `Surat dari ${data.suratDari || "-"} Tanggal ${formatTanggal(data.tanggalSurat)} Perihal ${data.perihalSurat || "-"}.`;
+
+    // Pilih teks dasar: jika ada isinota (berarti mode Nota Dinas), gunakan format khusus
+    let dasarText = "";
+    if (data.isinota) {
+        dasarText = `Berdasarkan arahan langsung dari Camat Salam Babaris pada tanggal ${formatTanggal(data.tanggal)}, maka dilakukan perjalanan dinas ke ${data.tujuan || "-"}.`;
+    } else {
+        dasarText = `Surat dari ${data.suratDari || "-"} Tanggal ${formatTanggal(data.tanggalSurat)} Perihal ${data.perihalSurat || "-"}.`;
+    }
+
     const dasarLines = pdfDoc.splitTextToSize(dasarText, dasarMaxWidth);
     pdfDoc.text(dasarLines, dasarIndent, y);
     y += dasarLines.length * 5 + 5;

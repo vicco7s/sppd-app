@@ -8,6 +8,7 @@ import { signOut, onAuthStateChanged } from "firebase/auth";
 import { collection, getDocs, deleteDoc, doc, query, orderBy, addDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "react-hot-toast";
 import { generateSPPD } from "@/lib/pdf/perjadinkota/page";
+import { generateNotaDinas } from "@/lib/pdf/perjadinkota/nota";
 import PegawaiModal from "@/components/PegawaiModal";
 import { updateDoc, getDoc } from "firebase/firestore";
 import { useInactivityLogout, clearAuthCache } from "@/hooks/useInactivityLogout";
@@ -25,6 +26,8 @@ export default function DashadminPage() {
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
+    const [activePrintMenu, setActivePrintMenu] = useState(null);
+    const printMenuRef = useRef(null);
 
     // Modal State for Pegawai
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -107,16 +110,29 @@ export default function DashadminPage() {
         }
     };
 
-    const handlePrint = async (item) => {
+    const handlePrint = async (item, type = 'spj') => {
         try {
-            toast.loading("Generating SPPD PDF...", { id: "sppd-loading" });
-            await generateSPPD(item);
-            toast.dismiss("sppd-loading");
-            toast.success("SPPD PDF berhasil dibuat!");
+            if (type === 'nota') {
+                if (!item.dari && !item.isinota) {
+                    toast.error("Data 'Dari' atau 'Isi Nota' masih kosong. Pastikan sudah diisi di form!");
+                    return;
+                }
+                toast.loading("Generating Nota Dinas PDF...", { id: "nota-loading" });
+                await generateNotaDinas(item);
+                toast.dismiss("nota-loading");
+                toast.success("Nota Dinas PDF berhasil dibuat!");
+            } else {
+                toast.loading("Generating SPPD PDF...", { id: "sppd-loading" });
+                await generateSPPD(item);
+                toast.dismiss("sppd-loading");
+                toast.success("SPPD PDF berhasil dibuat!");
+            }
+            setActivePrintMenu(null);
         } catch (error) {
             toast.dismiss("sppd-loading");
-            console.error("Error generating SPPD PDF:", error);
-            toast.error("Gagal membuat SPPD PDF");
+            toast.dismiss("nota-loading");
+            console.error("Error generating PDF:", error);
+            toast.error("Gagal membuat PDF");
         }
     };
 
@@ -177,9 +193,11 @@ export default function DashadminPage() {
 
     useEffect(() => {
         function handleClickOutside(e) {
-
             if (profileRef.current && !profileRef.current.contains(e.target)) {
                 setOpenProfile(false);
+            }
+            if (printMenuRef.current && !printMenuRef.current.contains(e.target)) {
+                setActivePrintMenu(null);
             }
         }
 
@@ -225,34 +243,12 @@ export default function DashadminPage() {
                         Pegawai
                     </button>
 
-                    <div className="relative">
-                        <button
-                            type="button"
-                            onClick={() => setOpenPerjadin(!openPerjadin)}
-                            aria-expanded={openPerjadin}
-                            className="w-full text-left flex items-center justify-between gap-3 p-2 rounded hover:bg-gray-100 text-gray-700 focus:outline-none focus:ring-0"
-                        >
-                            <span>Perjadin Dalam Kota</span>
-                            <span className="text-sm">{openPerjadin ? <ChevronDown size={18} /> : <ChevronRight size={18} />}</span>
-                        </button>
-
-                        {openPerjadin && (
-                            <ul className="mt-2 bg-white border border-transparent rounded shadow-sm">
-                                <li
-                                    onClick={() => setActiveTab("berkas-konsul")}
-                                    className={`px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm focus:outline-none ${activeTab === 'berkas-konsul' ? 'bg-gray-100 font-semibold text-blue-600' : ''}`}
-                                >
-                                    Perjadin Berkas atau Konsul
-                                </li>
-                                <li
-                                    onClick={() => setActiveTab("perjadin-umum-dalam-kota")}
-                                    className={`px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm focus:outline-none ${activeTab === 'perjadin-umum-dalam-kota' ? 'bg-gray-100 font-semibold text-blue-600' : ''}`}
-                                >
-                                    Perjadin Umum Dalam Kota
-                                </li>
-                            </ul>
-                        )}
-                    </div>
+                    <button
+                        onClick={() => setActiveTab("perjadin-umum-dalam-kota")}
+                        className={`w-full text-left flex items-center gap-3 p-2 rounded hover:bg-gray-100 ${activeTab === 'perjadin-umum-dalam-kota' ? 'bg-gray-100 font-semibold' : 'text-gray-800'}`}
+                    >
+                        Perjadin Dalam Kota
+                    </button>
 
                     <div className="relative">
                         <button
@@ -596,13 +592,48 @@ export default function DashadminPage() {
                                                                 >
                                                                     <Edit size={16} />
                                                                 </button>
-                                                                <button
-                                                                    onClick={() => handlePrint(item)}
-                                                                    className="text-green-600 hover:text-green-800 p-1"
-                                                                    title="Print"
-                                                                >
-                                                                    <Printer size={16} />
-                                                                </button>
+                                                                <div className="relative">
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setActivePrintMenu(activePrintMenu === item.id ? null : item.id);
+                                                                        }}
+                                                                        className="text-green-600 hover:text-green-800 p-1 transition-colors"
+                                                                        title="Print"
+                                                                    >
+                                                                        <Printer size={16} />
+                                                                    </button>
+
+                                                                    {activePrintMenu === item.id && (
+                                                                        <div
+                                                                            ref={printMenuRef}
+                                                                            className="absolute right-0 bottom-full mb-2 w-52 bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200"
+                                                                        >
+                                                                            <div className="p-2 space-y-1 bg-white">
+                                                                                <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-50 mb-1">
+                                                                                    Opsi Cetak
+                                                                                </div>
+                                                                                {/* Hanya muncul jika data NOTA ada */}
+                                                                                {(item.isinota || item.dari) && (
+                                                                                    <button
+                                                                                        onClick={() => handlePrint(item, 'nota')}
+                                                                                        className="w-full text-left px-3 py-2.5 text-xs font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-lg transition-all flex items-center gap-3 group"
+                                                                                    >
+                                                                                        <div className="w-2 h-2 rounded-full bg-green-500 group-hover:scale-110 transition-transform" />
+                                                                                        <span>Print Nota Dinas</span>
+                                                                                    </button>
+                                                                                )}
+                                                                                <button
+                                                                                    onClick={() => handlePrint(item, 'spj')}
+                                                                                    className="w-full text-left px-3 py-2.5 text-xs font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-all flex items-center gap-3 group"
+                                                                                >
+                                                                                    <div className="w-2 h-2 rounded-full bg-blue-500 group-hover:scale-110 transition-transform" />
+                                                                                    <span>Print SPJ Perjadin</span>
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
                                                                 <button
                                                                     onClick={() => handleDelete(item.id)}
                                                                     className="text-red-600 hover:text-red-800 p-1"
