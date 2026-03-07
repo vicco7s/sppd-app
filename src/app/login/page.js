@@ -2,7 +2,7 @@
 
 import { Eye, EyeOff, Bell } from "lucide-react";
 import toast from "react-hot-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/services/firebases";
 import { signInWithEmailAndPassword } from "firebase/auth";
@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
 
   // Check if user is already logged in
-  useState(() => {
+  useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         // User is already signed in, check role and redirect
@@ -123,7 +123,7 @@ export default function LoginPage() {
           <div className="text-center">
             <button
               type="button"
-              onClick={() => router.push("/reset-password")}
+              onClick={() => router.replace("/reset-password")}
               className="text-sm text-blue-800"
             >
               Lupa Password?

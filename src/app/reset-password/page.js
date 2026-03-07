@@ -13,7 +13,7 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-{/* Fungsi Reset Password */}
+  {/* Fungsi Reset Password */ }
   const handleReset = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -35,9 +35,9 @@ export default function ResetPassword() {
         {/* Header dan Tombol Kembali ke Login */}
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-semibold text-gray-900">Reset Password</h2>
-          <Link href="/login" className="text-red-600 hover:text-red-700 p-2 rounded hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-300" aria-label="Kembali ke login">
+          <button type="button" onClick={() => router.replace("/login")} className="text-red-600 hover:text-red-700 p-2 rounded hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-300" aria-label="Kembali ke login">
             <X className="h-5 w-5" aria-hidden="true" />
-          </Link>
+          </button>
         </div>
         {/* Input Email */}
         <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
@@ -61,7 +61,7 @@ export default function ResetPassword() {
           {loading ? "Loading..." : "Kirim Link Reset"}
         </button>
       </form>
-        {/* Loading Overlay */}
+      {/* Loading Overlay */}
       {loading && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
