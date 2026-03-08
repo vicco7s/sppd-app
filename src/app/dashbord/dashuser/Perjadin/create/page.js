@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
-import { db } from "@/services/firebases";
-import { collection, getDocs, doc, setDoc, query, where } from "firebase/firestore";
+import { auth, db } from "@/services/firebases";
+import { collection, getDocs, doc, setDoc, query, where, addDoc, serverTimestamp } from "firebase/firestore";
 import toast from "react-hot-toast";
 import PerjadinForm from '@/components/PerjadinForm';
 
@@ -67,6 +67,21 @@ const CreatePerjadin = () => {
         createdAt: new Date(),
         updatedAt: new Date()
       });
+
+      // Create Notification
+      try {
+        await addDoc(collection(db, "notifications"), {
+          title: "Perjadin Baru",
+          message: `Perjadin ke ${formData.tujuan} telah ditambahkan.`,
+          type: "perjadin",
+          userName: auth.currentUser?.displayName || "User",
+          userUid: auth.currentUser?.uid,
+          createdAt: serverTimestamp(),
+          read: false
+        });
+      } catch (notifErr) {
+        console.error("Failed to create notification:", notifErr);
+      }
 
       toast.success("Data berhasil disimpan!");
       router.push('/dashbord/dashuser');

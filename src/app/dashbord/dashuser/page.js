@@ -5,17 +5,17 @@ import { Bell, ChevronDown, ChevronRight, LogOut, User, Edit, Trash2, Printer } 
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/services/firebases";
 import { signOut, onAuthStateChanged } from "firebase/auth";
-import { collection, getDocs, deleteDoc, doc, query, orderBy, getDoc } from "firebase/firestore";
+import { collection, getDocs, deleteDoc, doc, query, orderBy, getDoc, onSnapshot, limit, serverTimestamp, addDoc } from "firebase/firestore";
 import { toast } from "react-hot-toast";
 import { generateSPPD } from "@/lib/pdf/perjadinkota/page";
 import { generateNotaDinas } from "@/lib/pdf/perjadinkota/nota";
 import { useInactivityLogout, clearAuthCache } from "@/hooks/useInactivityLogout";
+import Topbar from "@/components/Topbar";
 
 export default function DashuserPage() {
   useInactivityLogout(1800000); // 30 minutes auto logout
   const [openPerjadin, setOpenPerjadin] = useState(false);
   const [openPerjadinLuar, setOpenPerjadinLuar] = useState(false);
-  const [openProfile, setOpenProfile] = useState(false);
   const [activeTab, setActiveTab] = useState("overview"); // State to manage active content in main area
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -114,14 +114,10 @@ export default function DashuserPage() {
   };
 
 
-  {/* Fungsi Dropdown profil & Print Menu */ }
-  const profileRef = useRef(null);
+  {/* Fungsi Print Menu */ }
 
   useEffect(() => {
     function handleClickOutside(e) {
-      if (profileRef.current && !profileRef.current.contains(e.target)) {
-        setOpenProfile(false);
-      }
       if (printMenuRef.current && !printMenuRef.current.contains(e.target)) {
         setActivePrintMenu(null);
       }
@@ -197,54 +193,7 @@ export default function DashuserPage() {
       {/* Main area */}
       <div className="flex-1 flex flex-col">
         {/* Topbar */}
-        <header className="h-16 bg-white flex items-center px-6 shadow-sm">
-          <div className="flex-1">
-            {/* <input placeholder="Search or type a command" className="w-1/3 border rounded px-3 py-2 text-sm" /> */}
-          </div>
-          <div ref={profileRef} className="flex items-center gap-4 relative">
-            <button className="p-2 rounded-full text-black hover:bg-blue-600 hover:text-white"><Bell size={20} /></button>
-
-            {/* Profile dropdown */}
-            <button
-              type="button"
-              onClick={() => setOpenProfile(!openProfile)}
-              className="w-8 h-8 bg-blue-300 rounded-full flex items-center justify-center focus:outline-none"
-              aria-expanded={openProfile}
-            >
-              <User size={16} className="text-white" />
-            </button>
-
-            {openProfile && (
-              <div className="absolute right-0 mt-12 w-56 bg-white rounded shadow z-20 border border-gray-100 focus:outline-none">
-                <div className="p-4 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-800 flex items-center justify-center">U</div>
-                  <div>
-                    <div className="font-semibold text-black">{user?.displayName || "Nama Pengguna"}</div>
-                    <div className="text-sm text-gray-500">{user?.email || "user@example.com"}</div>
-                  </div>
-                </div>
-                <div className="px-4 py-2 border-t border-gray-100">
-                  <button
-                    onClick={async () => {
-                      try {
-                        await signOut(auth);
-                        clearAuthCache();
-                        router.replace("/login");
-                      } catch (err) {
-                        console.error("Logout gagal", err);
-                        toast.error("Logout Gagal");
-                      }
-                    }}
-                    className="w-full text-left text-red-600 font-semibold hover:bg-red-50 p-2 rounded focus:outline-none flex items-center gap-2"
-                  >
-                    <LogOut size={16} />
-                    Logout
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </header>
+        <Topbar user={user} role="User" />
 
         {/* Content */}
         <main className="p-6">
