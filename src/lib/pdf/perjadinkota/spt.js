@@ -151,12 +151,12 @@ export async function drawSPTLayout(pdfDoc, data, pegawaiUtama, pengikutList) {
 
     // ========== DASAR ==========
     pdfDoc.setFontSize(10);
-    pdfDoc.setFont("helvetica", "normal");
-
-    const dasarLabel = "Dasar:";
+    pdfDoc.setFont("helvetica", "bold");
+    const dasarLabel = "Dasar :";
     pdfDoc.text(dasarLabel, marginLeft, y);
 
-    // Dasar content
+    // Dasar content (back to normal font)
+    pdfDoc.setFont("helvetica", "normal");
     const dasarIndent = marginLeft + 18;
     const dasarMaxWidth = contentWidth - 18;
 
