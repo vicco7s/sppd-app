@@ -254,13 +254,13 @@ export async function drawHasilLayout(pdfDoc, data, person) {
     const alignVal = ttdX + 22;
 
     pdfDoc.text("Dibuat di", alignLabel, y);
-    pdfDoc.text(`: Salam Babaris`, alignVal, y);
+    pdfDoc.text(` : Salam Babaris`, alignVal, y);
     y += lineHeight;
 
     pdfDoc.text("Pada Tanggal", alignLabel, y);
     // Usually the report is signed after return date + a few days, but we use data.tanggal for now or return date.
-    const tanggalTtd = data.tanggalKembali ? data.tanggalKembali : data.tanggal;
-    pdfDoc.text(`: ${formatTanggal(tanggalTtd)}`, alignVal, y);
+    const tanggalTtd = data.tglhasil ? data.tglhasil : data.tanggal;
+    pdfDoc.text(` : ${formatTanggal(tanggalTtd)}`, alignVal, y);
     y += lineHeight + 2;
 
     pdfDoc.text("Pembuat Laporan,", alignLabel, y);

@@ -147,6 +147,23 @@ export default function DashadminPage() {
             if (selectedPegawai) {
                 // UPDATE
                 await updateDoc(doc(db, "pegawai", selectedPegawai.id), dataToStore);
+
+                // Create Notification for Pegawai Update
+                try {
+                    await addDoc(collection(db, "notifications"), {
+                        title: "Update Data Pegawai",
+                        message: `Data pegawai ${formData.nama} telah diperbarui.`,
+                        type: "update",
+                        userName: auth.currentUser?.displayName || "Admin",
+                        userEmail: auth.currentUser?.email || "-",
+                        userUid: auth.currentUser?.uid,
+                        createdAt: serverTimestamp(),
+                        read: false
+                    });
+                } catch (notifErr) {
+                    console.error("Failed to create pegawai update notification:", notifErr);
+                }
+
                 setPegawaiList(prev => prev.map(item => item.id === selectedPegawai.id ? { ...item, ...formData, tgllahir: dataToStore.tgllahir } : item));
                 toast.success("Data pegawai berhasil diperbarui");
             } else {
@@ -163,6 +180,7 @@ export default function DashadminPage() {
                         message: `Pegawai baru ${formData.nama} telah ditambahkan ke sistem.`,
                         type: "pegawai",
                         userName: auth.currentUser?.displayName || "Admin",
+                        userEmail: auth.currentUser?.email || "-",
                         userUid: auth.currentUser?.uid,
                         createdAt: serverTimestamp(),
                         read: false
@@ -191,6 +209,26 @@ export default function DashadminPage() {
             await updateDoc(doc(db, "perjadinkota", itemId), {
                 status: newStatus
             });
+
+            // Create Notification for Status Change
+            try {
+                // Fetch tujuan for better message
+                const itemSnap = await getDoc(doc(db, "perjadinkota", itemId));
+                const tujuan = itemSnap.exists() ? itemSnap.data().tujuan : "-";
+
+                await addDoc(collection(db, "notifications"), {
+                    title: "Status Perjadin Berubah",
+                    message: `Status Perjadin ke ${tujuan} diubah menjadi ${newStatus}.`,
+                    type: "status",
+                    userName: auth.currentUser?.displayName || "Admin",
+                    userEmail: auth.currentUser?.email || "-",
+                    userUid: auth.currentUser?.uid,
+                    createdAt: serverTimestamp(),
+                    read: false
+                });
+            } catch (notifErr) {
+                console.error("Failed to create status notification:", notifErr);
+            }
 
             setPerjadinList(prev => prev.map(item =>
                 item.id === itemId ? { ...item, status: newStatus } : item
@@ -272,8 +310,8 @@ export default function DashadminPage() {
 
                         {openPerjadinLuar && (
                             <ul className="mt-2 bg-white border border-transparent rounded shadow-sm">
-                                <li className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm focus:outline-none">Perjadin Luar Dalam Provinsi</li>
-                                <li className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm focus:outline-none">Perjadin Luar Antar Provinsi</li>
+                                <li onClick={() => toast.success("Coming Soon!")} className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm focus:outline-none">Perjadin Luar Dalam Provinsi</li>
+                                <li onClick={() => toast.success("Coming Soon!")} className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm focus:outline-none">Perjadin Luar Antar Provinsi</li>
                             </ul>
                         )}
                     </div>
@@ -413,74 +451,7 @@ export default function DashadminPage() {
                             </div>
                         )}
 
-                        {/* Content for "Perjadin Berkas atau Konsul" */}
-                        {activeTab === "berkas-konsul" && (
-                            <div className="bg-white p-6 rounded shadow text-gray-800">
-                                <div className="flex justify-between items-center mb-6 border-b pb-4">
-                                    <h2 className="text-xl font-bold text-gray-900">List Data Perjadin Berkas atau Konsul</h2>
-                                    <button
-                                        onClick={() => router.push("/dashbord/dashuser/Perjadin/create")}
-                                        className="bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-blue-700 transition shadow-sm font-medium"
-                                    >
-                                        <span className="text-lg">+</span> Tambah Perjadin Baru
-                                    </button>
-                                </div>
 
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left border-collapse">
-                                        <thead className="bg-gray-50">
-                                            <tr>
-                                                <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">No</th>
-                                                <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Tujuan</th>
-                                                <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Tanggal</th>
-                                                <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Keperluan</th>
-                                                <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Status</th>
-                                                <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600 text-center">Aksi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td colSpan="6" className="px-4 py-10 text-center text-gray-500 italic border-b">
-                                                    Belum ada data perjadin. Silahkan tambah data baru.
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-
-                                {/* Pagination Controls */}
-                                {currentList.length > itemsPerPage && (
-                                    <div className="flex justify-center items-center gap-2 mt-6">
-                                        <button
-                                            onClick={() => handlePageChange(currentPage - 1)}
-                                            disabled={currentPage === 1}
-                                            className="px-3 py-2 rounded border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            Sebelumnya
-                                        </button>
-                                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                                            <button
-                                                key={page}
-                                                onClick={() => handlePageChange(page)}
-                                                className={`px-3 py-2 rounded text-sm font-medium ${currentPage === page
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                                                    }`}
-                                            >
-                                                {page}
-                                            </button>
-                                        ))}
-                                        <button
-                                            onClick={() => handlePageChange(currentPage + 1)}
-                                            disabled={currentPage === totalPages}
-                                            className="px-3 py-2 rounded border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            Selanjutnya
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        )}
 
                         {/* Content for "Perjadin Umum Dalam Kota" */}
                         {activeTab === "perjadin-umum-dalam-kota" && (
@@ -547,13 +518,19 @@ export default function DashadminPage() {
                                                         </td>
                                                         <td className="px-4 py-3 border-b text-sm text-center">
                                                             <div className="flex items-center justify-center gap-2">
-                                                                <button
-                                                                    onClick={() => router.push(`/dashbord/dashuser/Perjadin/edit/${item.id}`)}
-                                                                    className="text-blue-600 hover:text-blue-800 p-1"
-                                                                    title="Edit"
-                                                                >
-                                                                    <Edit size={16} />
-                                                                </button>
+                                                                {(!item.status || item.status === 'Menunggu') ? (
+                                                                    <button
+                                                                        onClick={() => router.push(`/dashbord/dashuser/Perjadin/edit/${item.id}`)}
+                                                                        className="text-blue-600 hover:text-blue-800 p-1"
+                                                                        title="Edit"
+                                                                    >
+                                                                        <Edit size={16} />
+                                                                    </button>
+                                                                ) : (
+                                                                    <div className="text-gray-300 p-1 cursor-not-allowed" title="Data sudah diproses, tidak bisa diedit">
+                                                                        <Edit size={16} className="opacity-50" />
+                                                                    </div>
+                                                                )}
                                                                 <div className="relative">
                                                                     <button
                                                                         onClick={(e) => {
@@ -565,7 +542,6 @@ export default function DashadminPage() {
                                                                     >
                                                                         <Printer size={16} />
                                                                     </button>
-
                                                                     {activePrintMenu === item.id && (
                                                                         <div
                                                                             ref={printMenuRef}

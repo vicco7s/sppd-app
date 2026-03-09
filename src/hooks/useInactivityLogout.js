@@ -26,7 +26,7 @@ export const clearAuthCache = () => {
 export const useInactivityLogout = (timeoutMs = 1800000) => {
     const timerRef = useRef(null);
 
-    const handleLogout = async () => {
+    const handleLogout = async (reason = "inactivity") => {
         try {
             // Logout from Firebase
             await signOut(auth);
@@ -35,12 +35,16 @@ export const useInactivityLogout = (timeoutMs = 1800000) => {
             clearAuthCache();
 
             // Inform user
-            toast.error("Sesi Anda telah berakhir karena tidak ada aktivitas selama 30 menit.", {
+            const message = reason === "inactivity"
+                ? "Sesi Anda telah berakhir karena tidak ada aktivitas selama 30 menit."
+                : "Sesi Anda telah berakhir. Silakan login kembali.";
+
+            toast.error(message, {
                 duration: 5000,
                 id: "auto-logout-toast"
             });
 
-            // Redirect to login using window.location to ensure a clean state (cache clear)
+            // Redirect to login
             window.location.href = "/login";
         } catch (error) {
             console.error("Error during auto-logout:", error);
@@ -49,11 +53,30 @@ export const useInactivityLogout = (timeoutMs = 1800000) => {
 
     const resetTimer = () => {
         if (timerRef.current) clearTimeout(timerRef.current);
-        timerRef.current = setTimeout(handleLogout, timeoutMs);
+
+        // Update last activity in localStorage
+        localStorage.setItem("lastActivity", Date.now().toString());
+
+        timerRef.current = setTimeout(() => handleLogout("inactivity"), timeoutMs);
     };
 
     useEffect(() => {
-        // List of events that count as activity
+        // 1. Initial Check on Mount (handles browser reopen/refresh)
+        const checkSession = () => {
+            const lastActivity = localStorage.getItem("lastActivity");
+            if (lastActivity) {
+                const diff = Date.now() - parseInt(lastActivity, 10);
+                if (diff >= timeoutMs) {
+                    handleLogout("expired");
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        if (checkSession()) return;
+
+        // 2. Setup Activity Listeners
         const activityEvents = [
             "mousedown",
             "mousemove",
@@ -80,5 +103,5 @@ export const useInactivityLogout = (timeoutMs = 1800000) => {
                 window.removeEventListener(event, listener);
             });
         };
-    }, []);
+    }, [timeoutMs]);
 };

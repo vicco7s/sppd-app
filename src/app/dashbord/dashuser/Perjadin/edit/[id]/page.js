@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
-import { db } from "@/services/firebases";
-import { collection, getDocs, doc, getDoc, updateDoc, query, where } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, updateDoc, query, where, addDoc, serverTimestamp } from "firebase/firestore";
 import toast from "react-hot-toast";
 import PerjadinForm from '@/components/PerjadinForm';
+import { auth, db } from "@/services/firebases";
 
 const EditPerjadinPage = () => {
   const router = useRouter();
@@ -46,9 +46,16 @@ const EditPerjadinPage = () => {
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
+          const data = docSnap.data();
+          // Jika status bukan Menunggu (atau undefined), jangan izinkan edit
+          if (data.status && data.status !== 'Menunggu') {
+            toast.error("Data sudah diproses Admin dan tidak dapat diedit kembali.");
+            router.replace('/dashbord/dashuser');
+            return;
+          }
           setInitialData({
             id: docSnap.id,
-            ...docSnap.data()
+            ...data
           });
         } else {
           toast.error("Data tidak ditemukan!");
@@ -105,6 +112,22 @@ const EditPerjadinPage = () => {
         ...formData,
         updatedAt: new Date()
       });
+
+      // Create Notification for Update
+      try {
+        await addDoc(collection(db, "notifications"), {
+          title: "Update Perjadin",
+          message: `Data Perjadin ke ${formData.tujuan} telah diperbarui.`,
+          type: "update",
+          userName: auth.currentUser?.displayName || "User",
+          userEmail: auth.currentUser?.email || "-",
+          userUid: auth.currentUser?.uid,
+          createdAt: serverTimestamp(),
+          read: false
+        });
+      } catch (notifErr) {
+        console.error("Failed to create update notification:", notifErr);
+      }
 
       toast.success("Data berhasil diperbarui!");
       router.push('/dashbord/dashuser');

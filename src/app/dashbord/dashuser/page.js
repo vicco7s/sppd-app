@@ -177,8 +177,8 @@ export default function DashuserPage() {
 
             {openPerjadinLuar && (
               <ul className="mt-2 bg-white border border-transparent rounded shadow-sm">
-                <li className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm focus:outline-none">Perjadin Luar Dalam Provinsi</li>
-                <li className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm focus:outline-none">Perjadin Luar Antar Provinsi</li>
+                <li onClick={() => toast.success("Coming Soon!")} className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm focus:outline-none">Perjadin Luar Dalam Provinsi</li>
+                <li onClick={() => toast.success("Coming Soon!")} className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm focus:outline-none">Perjadin Luar Antar Provinsi</li>
               </ul>
             )}
           </div>
@@ -265,13 +265,19 @@ export default function DashuserPage() {
                             </td>
                             <td className="px-4 py-3 border-b text-sm text-center">
                               <div className="flex items-center justify-center gap-2">
-                                <button
-                                  onClick={() => router.push(`/dashbord/dashuser/Perjadin/edit/${item.id}`)}
-                                  className="text-blue-600 hover:text-blue-800 p-1"
-                                  title="Edit"
-                                >
-                                  <Edit size={16} />
-                                </button>
+                                {(!item.status || item.status === 'Menunggu') ? (
+                                  <button
+                                    onClick={() => router.push(`/dashbord/dashuser/Perjadin/edit/${item.id}`)}
+                                    className="text-blue-600 hover:text-blue-800 p-1"
+                                    title="Edit"
+                                  >
+                                    <Edit size={16} />
+                                  </button>
+                                ) : (
+                                  <div className="text-gray-300 p-1 cursor-not-allowed" title="Data sudah diproses, tidak bisa diedit">
+                                    <Edit size={16} className="opacity-50" />
+                                  </div>
+                                )}
                                 <div className="relative">
                                   <button
                                     onClick={(e) => {

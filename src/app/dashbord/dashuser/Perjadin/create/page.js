@@ -73,8 +73,9 @@ const CreatePerjadin = () => {
         await addDoc(collection(db, "notifications"), {
           title: "Perjadin Baru",
           message: `Perjadin ke ${formData.tujuan} telah ditambahkan.`,
-          type: "perjadin",
+          type: "create",
           userName: auth.currentUser?.displayName || "User",
+          userEmail: auth.currentUser?.email || "-",
           userUid: auth.currentUser?.uid,
           createdAt: serverTimestamp(),
           read: false

@@ -1,12 +1,14 @@
 "use client";
 
-import { Eye, EyeOff, Bell } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/services/firebases";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+
+import UpdateNotificationModal from "@/components/UpdateNotificationModal";
 
 
 export default function LoginPage() {
@@ -132,21 +134,6 @@ export default function LoginPage() {
 
         </form>
 
-        <div className="mt-8 p-4 bg-blue-100/40 rounded-2xl border border-blue-200/50 backdrop-blur-sm">
-          <div className="flex items-center gap-2 mb-2 text-blue-900">
-            <Bell size={16} className="text-blue-600" />
-            <span className="text-[10px] font-bold uppercase tracking-wider font-semibold">Update Terbaru 09 Maret 2026</span>
-          </div>
-          <ul className="text-[11px] text-blue-900/80 space-y-1.5 list-disc list-inside">
-            <li className="leading-tight font-medium">Penambahan Notifikasi Aktivitas User & Admin pada icon Bell</li>
-            <li className="leading-tight font-medium">Penyesuaian Tampilan Dashboard Admin</li>
-            <li className="leading-tight font-medium">Penyesuaian Tampilan Dashboard User</li>
-            <li className="leading-tight font-medium">Fitur Cetak PDF Nota Dinas (Format F4)</li>
-            <li className="leading-tight font-medium">Dasar SPT Otomatis berdasarkan Arahan Camat</li>
-            <li className="leading-tight font-medium">Format PDF: Rata Kanan-Kiri & Indentasi Paragraf</li>
-          </ul>
-        </div>
-
         {/* Sign up link */}
         <div className="mt-6 text-center text-sm text-gray-700">Belum Punya Akun ? <a href="#" className="font-semibold text-blue-800">Sign up</a></div>
 
@@ -154,8 +141,10 @@ export default function LoginPage() {
         {error && (
           <p className="text-red-500 text-sm text-center">{error}</p>
         )}
-
       </div>
+
+      <UpdateNotificationModal />
+
       {/* Loading Overlay */}
       {loading && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">

@@ -202,16 +202,19 @@ export async function drawSPDLayout(pdfDoc, data, pegawaiUtama, pengikutList) {
     y += row1H;
 
     // ---- Row 02: Nama/NIP Pegawai ----
-    const row2H = 12;
+    const namaNipText = `${namaPegawai}/\n${nipPegawai}`;
+    const namaNipLines = pdfDoc.splitTextToSize(namaNipText, colValue - 4);
+    const row2H = Math.max(12, (namaNipLines.length * 4) + 2);
     drawCell(pdfDoc, xNo, y, colNo, row2H, "02", { align: "center", verticalAlign: "middle" });
     drawCell(pdfDoc, xLabel, y, colLabel, row2H, "Nama/NIP Pegawai yang melaksanakan\nperjalanan dinas");
-    // Value: Nama + NIP
-    const namaLines = `${namaPegawai}/\n${nipPegawai}`;
-    drawCell(pdfDoc, xValue, y, colValue, row2H, namaLines, { fontStyle: "bold" });
+    drawCell(pdfDoc, xValue, y, colValue, row2H, namaNipText, { fontStyle: "bold" });
     y += row2H;
 
     // ---- Row 03: Pangkat, Jabatan, Tingkat Biaya ----
-    const row3H = 18;
+    const pLines = pdfDoc.splitTextToSize(`a. ${pangkatPegawai}`, colValue - 4);
+    const jLines = pdfDoc.splitTextToSize(`b. ${jabatanPegawai}`, colValue - 4);
+    const row3H = Math.max(18, (pLines.length + jLines.length + 1) * 4 + 3);
+
     drawCell(pdfDoc, xNo, y, colNo, row3H, "03", { align: "center", verticalAlign: "middle" });
 
     // Label column — 3 sub-labels
@@ -220,22 +223,24 @@ export async function drawSPDLayout(pdfDoc, data, pegawaiUtama, pengikutList) {
     pdfDoc.rect(xLabel, y, colLabel, row3H);
     pdfDoc.setFontSize(8);
     pdfDoc.setFont("helvetica", "normal");
-    pdfDoc.text("a. Pangkat dan Golongan", xLabel + 2, y + 5);
-    pdfDoc.text("b. Jabatan/Instansi", xLabel + 2, y + 10);
-    pdfDoc.text("c. Tingkat Biaya Perjalanan Dinas", xLabel + 2, y + 15);
+    pdfDoc.text("a. Pangkat dan Golongan", xLabel + 2, y + 4.5);
+    pdfDoc.text("b. Jabatan/Instansi", xLabel + 2, y + 4.5 + (pLines.length * 4));
+    pdfDoc.text("c. Tingkat Biaya Perjalanan Dinas", xLabel + 2, y + row3H - 2.5);
 
     // Value column — 3 sub-values
     pdfDoc.rect(xValue, y, colValue, row3H);
-    pdfDoc.text(`a. ${pangkatPegawai}`, xValue + 2, y + 5);
-    pdfDoc.text(`b. ${jabatanPegawai}`, xValue + 2, y + 10);
-    pdfDoc.text("c.", xValue + 2, y + 15);
+    pdfDoc.text(pLines, xValue + 2, y + 4.5);
+    pdfDoc.text(jLines, xValue + 2, y + 4.5 + (pLines.length * 4));
+    pdfDoc.text("c.", xValue + 2, y + row3H - 2.5);
     y += row3H;
 
     // ---- Row 04: Maksud Perjalanan Dinas ----
-    const row4H = 8;
+    const maksudText = data.perihalSurat || "-";
+    const maksudLinesArr = pdfDoc.splitTextToSize(maksudText, colValue - 4);
+    const row4H = Math.max(8, (maksudLinesArr.length * 4) + 2);
     drawCell(pdfDoc, xNo, y, colNo, row4H, "04", { align: "center", verticalAlign: "middle" });
     drawCell(pdfDoc, xLabel, y, colLabel, row4H, "Maksud Perjalanan Dinas");
-    drawCell(pdfDoc, xValue, y, colValue, row4H, data.perihalSurat || "-", { fontStyle: "bold" });
+    drawCell(pdfDoc, xValue, y, colValue, row4H, maksudText, { fontStyle: "bold" });
     y += row4H;
 
     // ---- Row 05: Alat angkutan ----
@@ -246,21 +251,24 @@ export async function drawSPDLayout(pdfDoc, data, pegawaiUtama, pengikutList) {
     y += row5H;
 
     // ---- Row 06: Tempat berangkat & tujuan ----
-    const row6H = 12;
+    const tujuanText = `b. ${data.tujuan || "-"}`;
+    const tujuanLinesArr = pdfDoc.splitTextToSize(tujuanText, colValue - 4);
+    const row6H = Math.max(12, 9 + (tujuanLinesArr.length * 4) + 1);
+
     drawCell(pdfDoc, xNo, y, colNo, row6H, "06", { align: "center", verticalAlign: "middle" });
 
     // Label
     pdfDoc.rect(xLabel, y, colLabel, row6H);
     pdfDoc.setFontSize(8);
     pdfDoc.setFont("helvetica", "normal");
-    pdfDoc.text("a. Tempat berangkat", xLabel + 2, y + 5);
-    pdfDoc.text("b. Tempat tujuan", xLabel + 2, y + 10);
+    pdfDoc.text("a. Tempat berangkat", xLabel + 2, y + 4.5);
+    pdfDoc.text("b. Tempat tujuan", xLabel + 2, y + 9);
 
     // Value
     pdfDoc.rect(xValue, y, colValue, row6H);
-    pdfDoc.text("a. Kecamatan Salam Babaris", xValue + 2, y + 5);
-    pdfDoc.setFont("helvetica", "bold");
-    pdfDoc.text(`b. ${data.tujuan || "-"}`, xValue + 2, y + 10);
+    pdfDoc.text("a. Kecamatan Salam Babaris", xValue + 2, y + 4.5);
+    pdfDoc.setFont("helvetica", "normal");
+    pdfDoc.text(tujuanLinesArr, xValue + 2, y + 9);
     y += row6H;
 
     // ---- Row 07: Lama, tanggal berangkat, tanggal kembali ----
@@ -371,10 +379,12 @@ export async function drawSPDLayout(pdfDoc, data, pegawaiUtama, pengikutList) {
     y += row9H;
 
     // ---- Row 10: Keterangan lain-lain ----
-    const row10H = 8;
+    const ketText = data.keterangan || "-";
+    const ketLinesArr = pdfDoc.splitTextToSize(ketText, colValue - 4);
+    const row10H = Math.max(8, (ketLinesArr.length * 4) + 2);
     drawCell(pdfDoc, xNo, y, colNo, row10H, "10", { align: "center", verticalAlign: "middle" });
     drawCell(pdfDoc, xLabel, y, colLabel, row10H, "Keterangan lain-lain");
-    drawCell(pdfDoc, xValue, y, colValue, row10H, data.keterangan || "-");
+    drawCell(pdfDoc, xValue, y, colValue, row10H, ketText);
     y += row10H;
 
     // ========== TANDA TANGAN (Statis) ==========
