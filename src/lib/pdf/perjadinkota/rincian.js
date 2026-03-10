@@ -250,7 +250,7 @@ export async function drawRincianLayout(pdfDoc, data, person, participants = [],
     const ttdX = pageWidth - marginRight - 60;
     pdfDoc.setFontSize(10);
     pdfDoc.setFont("helvetica", "normal");
-    pdfDoc.text(`Salam Babaris, ${formatTanggal(data.tanggal)}`, ttdX, y);
+    pdfDoc.text(`Salam Babaris, ${formatTanggal(data.tglhasil)}`, ttdX, y);
     y += 5;
     pdfDoc.text("Pelaksana SPD,", ttdX, y);
     y += 20;
