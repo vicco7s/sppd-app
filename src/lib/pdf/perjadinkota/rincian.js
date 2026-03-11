@@ -182,12 +182,13 @@ export async function drawRincianLayout(pdfDoc, data, person, participants = [],
 
     // Data Rows
     const rowH = 25;
-    const hari = data.hari || 0;
-    const uangHarian = Number(data.uangHarian) || 0;
-    const transport = Number(data.transport) || 0;
+    // Priority: use data from person object (journey-specific) if available, fallback to global data
+    const hari = person?.hari ?? data.hari ?? 0;
+    const uangHarian = Number(person?.uangHarian ?? data.uangHarian ?? 0);
+    const transport = Number(person?.transport ?? data.transport ?? 0);
 
-    // Gunakan data.total jika ada, jika tidak hitung manual
-    const grandTotal = data.total ? Number(data.total) : (uangHarian + transport) * hari;
+    // Gunakan total dari person jika ada, jika tidak data global, jika tidak hitung manual
+    const grandTotal = person?.total ? Number(person.total) : (data.total ? Number(data.total) : (uangHarian + transport) * hari);
 
     const totalUangHarian = uangHarian * hari;
     const totalTransport = transport * hari;

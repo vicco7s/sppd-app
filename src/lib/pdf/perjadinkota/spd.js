@@ -295,7 +295,7 @@ export async function drawSPDLayout(pdfDoc, data, pegawaiUtama, pengikutList) {
     // ---- Row 08: Pengikut (tabel) ----
     // Header pengikut
     const row8HeaderH = 6;
-    drawCell(pdfDoc, xNo, y, colNo, row8HeaderH, "08", { align: "center" });
+    drawCell(pdfDoc, xNo, y, colNo, row8HeaderH, "", { align: "center" });
 
     // Sub header di label+value area
     const pengikutFullW = colLabel + colValue;

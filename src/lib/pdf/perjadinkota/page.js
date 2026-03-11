@@ -24,15 +24,30 @@ async function fetchPegawai(id) {
  * @param {Object} data - Perjadin data dari Firebase
  */
 export async function generateSPPD(data) {
-    // Fetch pegawai utama
-    const pegawaiUtama = data.idPegawai ? await fetchPegawai(data.idPegawai) : null;
+    // Fetch pegawai utama and merge journey dates/costs
+    let pegawaiUtama = data.idPegawai ? await fetchPegawai(data.idPegawai) : null;
+    if (pegawaiUtama) {
+        pegawaiUtama = {
+            ...pegawaiUtama,
+            tglBerangkat: data.tanggalBerangkat,
+            tglKembali: data.tanggalKembali,
+            hari: data.hari,
+            uangHarian: data.uangHarian,
+            transport: data.transport,
+            total: data.total
+        };
+    }
 
-    // Fetch pegawai pengikut
+    // Fetch pegawai pengikut and merge journey dates/costs
     const pengikutList = [];
     if (data.namaPengikut && data.namaPengikut.length > 0) {
-        for (const id of data.namaPengikut) {
+        for (const item of data.namaPengikut) {
+            const id = typeof item === 'string' ? item : item.id;
+            const journeyData = typeof item === 'string' ? {} : item;
             const p = await fetchPegawai(id);
-            if (p) pengikutList.push(p);
+            if (p) {
+                pengikutList.push({ ...p, ...journeyData });
+            }
         }
     }
 
@@ -46,19 +61,19 @@ export async function generateSPPD(data) {
     // ========== HALAMAN 1: SPT ==========
     await drawSPTLayout(pdfDoc, data, pegawaiUtama, pengikutList);
 
-    // ========== HALAMAN 2: SPD ==========
+    // ========== HALAMAN 2: SPD (Utama) ==========
     pdfDoc.addPage([215, 330]);
     await drawSPDLayout(pdfDoc, data, pegawaiUtama, pengikutList);
 
-    // ========== HALAMAN 3: Rincian (Utama) ==========
+
+    // ========== HALAMAN Rincian (Utama) ==========
     pdfDoc.addPage([215, 330]);
     await drawRincianLayout(pdfDoc, data, pegawaiUtama, [pegawaiUtama], true);
 
-    // ========== HALAMAN 4+: Rincian (Pengikut) ==========
+    // ========== HALAMAN Rincian (Pengikut) ==========
     if (pengikutList.length > 0) {
         for (const p of pengikutList) {
             pdfDoc.addPage([215, 330]);
-            // Generate rincian untuk setiap pengikut secara individual
             await drawRincianLayout(pdfDoc, data, p, [p], false);
         }
     }
