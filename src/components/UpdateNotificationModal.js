@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Bell, Sparkles, Zap, Calendar, Bot, Send, ArrowRight, PenBox, Pen, PenLineIcon, CloudSyncIcon, PaperclipIcon } from "lucide-react";
+import { X, Bell, Sparkles, Zap, Calendar, Bot, Send, ArrowRight, PenBox, Pen, PenLineIcon, CloudSyncIcon, PaperclipIcon, PrinterIcon } from "lucide-react";
 
 export default function UpdateNotificationModal() {
     const [isOpen, setIsOpen] = useState(false);
@@ -42,7 +42,7 @@ export default function UpdateNotificationModal() {
                                     </div>
                                     <p className="text-blue-100/70 text-[10px] font-semibold flex items-center gap-1.5 ml-0.5">
                                         <Calendar size={11} />
-                                        Last Update: 12 Maret 2026
+                                        Last Update: 13 Maret 2026
                                     </p>
                                 </div>
                             </div>
@@ -66,6 +66,10 @@ export default function UpdateNotificationModal() {
 
                         <div className="grid gap-4">
                             <UpdateItem
+                                icon={<PrinterIcon className="text-yellow-500" size={14} />}
+                                text="perbaikan fitur cetak untuk menghasilkan dokumen yang lebih rapi dan profesional"
+                            />
+                            <UpdateItem
                                 icon={<PaperclipIcon className="text-blue-500" size={14} />}
                                 text="membandingkan jadwal semua orang dalam daftar ke SPD"
                             />
@@ -77,11 +81,6 @@ export default function UpdateNotificationModal() {
                                 icon={<PenLineIcon className="text-green-500" size={14} />}
                                 text="Peningkatan tampilan halaman form input perjadin kota"
                             />
-                            <UpdateItem
-                                icon={<Send className="text-rose-500" size={14} />}
-                                text="Notifikasi Interaktif Halaman Login"
-                            />
-                            
                         </div>
                     </div>
                 </div>
@@ -90,7 +89,7 @@ export default function UpdateNotificationModal() {
                 <div className="px-7 py-6 bg-gray-50/50 flex items-center justify-between border-t border-gray-100">
                     <div className="flex items-center gap-1.5 opacity-40">
                         <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                        <span className="text-[9px] font-black tracking-tighter text-gray-900 uppercase">v2.3.0.stable</span>
+                        <span className="text-[9px] font-black tracking-tighter text-gray-900 uppercase">v2.3.1.stable</span>
                     </div>
                     <button
                         onClick={handleClose}

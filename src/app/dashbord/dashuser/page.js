@@ -23,8 +23,7 @@ export default function DashuserPage() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const [activePrintMenu, setActivePrintMenu] = useState(null);
-  const printMenuRef = useRef(null);
+  const [printModalItem, setPrintModalItem] = useState(null);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (u) => {
@@ -104,7 +103,7 @@ export default function DashuserPage() {
         toast.dismiss("sppd-loading");
         toast.success("SPPD PDF berhasil dibuat!");
       }
-      setActivePrintMenu(null);
+      setPrintModalItem(null);
     } catch (error) {
       toast.dismiss("sppd-loading");
       toast.dismiss("nota-loading");
@@ -115,17 +114,6 @@ export default function DashuserPage() {
 
 
   {/* Fungsi Print Menu */ }
-
-  useEffect(() => {
-    function handleClickOutside(e) {
-      if (printMenuRef.current && !printMenuRef.current.contains(e.target)) {
-        setActivePrintMenu(null);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   // Pagination logic
   const totalPages = Math.ceil(perjadinList.length / itemsPerPage);
@@ -282,43 +270,13 @@ export default function DashuserPage() {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setActivePrintMenu(activePrintMenu === item.id ? null : item.id);
+                                      setPrintModalItem(item);
                                     }}
                                     className="text-green-600 hover:text-green-800 p-1 transition-colors"
                                     title="Print"
                                   >
                                     <Printer size={16} />
                                   </button>
-
-                                  {activePrintMenu === item.id && (
-                                    <div
-                                      ref={printMenuRef}
-                                      className="absolute right-0 bottom-full mb-2 w-52 bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200"
-                                    >
-                                      <div className="p-2 space-y-1 bg-white">
-                                        <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-50 mb-1">
-                                          Opsi Cetak
-                                        </div>
-                                        {/* Hanya muncul jika data NOTA ada */}
-                                        {(item.isinota || item.dari) && (
-                                          <button
-                                            onClick={() => handlePrint(item, 'nota')}
-                                            className="w-full text-left px-3 py-2.5 text-xs font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-lg transition-all flex items-center gap-3 group"
-                                          >
-                                            <div className="w-2 h-2 rounded-full bg-green-500 group-hover:scale-110 transition-transform" />
-                                            <span>Print Nota Dinas</span>
-                                          </button>
-                                        )}
-                                        <button
-                                          onClick={() => handlePrint(item, 'spj')}
-                                          className="w-full text-left px-3 py-2.5 text-xs font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-all flex items-center gap-3 group"
-                                        >
-                                          <div className="w-2 h-2 rounded-full bg-blue-500 group-hover:scale-110 transition-transform" />
-                                          <span>Print SPJ Perjadin</span>
-                                        </button>
-                                      </div>
-                                    </div>
-                                  )}
                                 </div>
                                 <button
                                   onClick={() => handleDelete(item.id)}
@@ -335,6 +293,47 @@ export default function DashuserPage() {
                     </tbody>
                   </table>
                 </div>
+
+                {printModalItem && (
+                  <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+                    onClick={() => setPrintModalItem(null)}
+                  >
+                    <div
+                      className="bg-white rounded-xl shadow-xl max-w-sm w-full"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex items-center justify-between px-4 py-3 border-b">
+                        <h3 className="text-sm font-semibold text-gray-800">Opsi Cetak</h3>
+                        <button
+                          onClick={() => setPrintModalItem(null)}
+                          className="text-gray-500 hover:text-gray-700"
+                          aria-label="Tutup"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <div className="p-4 space-y-2">
+                        {(printModalItem.isinota || printModalItem.dari) && (
+                          <button
+                            onClick={() => handlePrint(printModalItem, 'nota')}
+                            className="w-full text-left px-3 py-2.5 text-xs font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-lg transition-all flex items-center gap-3"
+                          >
+                            <div className="w-2 h-2 rounded-full bg-green-500" />
+                            <span>Print Nota Dinas</span>
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handlePrint(printModalItem, 'spj')}
+                          className="w-full text-left px-3 py-2.5 text-xs font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-all flex items-center gap-3"
+                        >
+                          <div className="w-2 h-2 rounded-full bg-blue-500" />
+                          <span>Print SPJ Perjadin</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Pagination Controls */}
                 {perjadinList.length > itemsPerPage && (
