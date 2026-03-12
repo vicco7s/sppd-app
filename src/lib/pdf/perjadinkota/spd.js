@@ -283,13 +283,43 @@ export async function drawSPDLayout(pdfDoc, data, pegawaiUtama, pengikutList) {
     pdfDoc.text("b. Tanggal berangkat", xLabel + 2, y + 10);
     pdfDoc.text("c. Tanggal harus kembali/tiba ditempat baru", xLabel + 2, y + 15);
 
+    // Calculate extreme dates (earliest departure, latest return)
+    let displayBerangkat = data.tanggalBerangkat;
+    let displayKembali = data.tanggalKembali;
+    let displayHari = data.hari || 1;
+
+    const participants = [pegawaiUtama, ...(pengikutList || [])].filter(Boolean);
+    if (participants.length > 0) {
+        let earliest = null;
+        let latest = null;
+
+        participants.forEach(p => {
+            if (p.tglBerangkat) {
+                if (!earliest || p.tglBerangkat < earliest) earliest = p.tglBerangkat;
+            }
+            if (p.tglKembali) {
+                if (!latest || p.tglKembali > latest) latest = p.tglKembali;
+            }
+        });
+
+        if (earliest) displayBerangkat = earliest;
+        if (latest) displayKembali = latest;
+        
+        // Recalculate days if we have extreme dates
+        if (earliest && latest) {
+            const start = new Date(earliest);
+            const end = new Date(latest);
+            const diffTime = Math.abs(end - start);
+            displayHari = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        }
+    }
+
     // Value
     pdfDoc.rect(xValue, y, colValue, row7H);
-    const lamaHari = data.hari || 1;
     pdfDoc.setFont("helvetica", "bold");
-    pdfDoc.text(`a.  ${lamaHari}  (${terbilang(lamaHari)}) Hari`, xValue + 2, y + 5);
-    pdfDoc.text(`b.  ${formatTanggal(data.tanggalBerangkat)}`, xValue + 2, y + 10);
-    pdfDoc.text(`c.  ${formatTanggal(data.tanggalKembali)}`, xValue + 2, y + 15);
+    pdfDoc.text(`a.  ${displayHari}  (${terbilang(displayHari)}) Hari`, xValue + 2, y + 5);
+    pdfDoc.text(`b.  ${formatTanggal(displayBerangkat)}`, xValue + 2, y + 10);
+    pdfDoc.text(`c.  ${formatTanggal(displayKembali)}`, xValue + 2, y + 15);
     y += row7H;
 
     // ---- Row 08: Pengikut (tabel) ----

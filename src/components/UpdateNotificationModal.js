@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Bell, Sparkles, Zap, Calendar, Bot, Send, ArrowRight } from "lucide-react";
+import { X, Bell, Sparkles, Zap, Calendar, Bot, Send, ArrowRight, PenBox, Pen, PenLineIcon, CloudSyncIcon, PaperclipIcon } from "lucide-react";
 
 export default function UpdateNotificationModal() {
     const [isOpen, setIsOpen] = useState(false);
@@ -34,7 +34,7 @@ export default function UpdateNotificationModal() {
                                 <Sparkles className="text-white animate-pulse" size={20} />
                             </div>
                             <div>
-                                <h2 className="text-xl font-extrabold tracking-tight leading-none mb-1">Update Log</h2>
+                                <h2 className="text-xl font-extrabold tracking-tight leading-none mb-1">What's New?</h2>
                                 <div className="flex flex-col gap-1.5 mt-2">
                                     <div className="flex items-center gap-1.5 bg-black/10 backdrop-blur-md px-2.5 py-1 rounded-lg w-fit border border-white/5">
                                         <Bot size={11} className="text-blue-200" />
@@ -42,7 +42,7 @@ export default function UpdateNotificationModal() {
                                     </div>
                                     <p className="text-blue-100/70 text-[10px] font-semibold flex items-center gap-1.5 ml-0.5">
                                         <Calendar size={11} />
-                                        Last Update: 10 Maret 2026
+                                        Last Update: 12 Maret 2026
                                     </p>
                                 </div>
                             </div>
@@ -66,21 +66,22 @@ export default function UpdateNotificationModal() {
 
                         <div className="grid gap-4">
                             <UpdateItem
+                                icon={<PaperclipIcon className="text-blue-500" size={14} />}
+                                text="membandingkan jadwal semua orang dalam daftar ke SPD"
+                            />
+                            <UpdateItem
+                                icon={<CloudSyncIcon className="text-orange-500" size={14} />}
+                                text="fitur Sinkronisasi Data untuk membuat penginputan jauh lebih efisien"
+                            />
+                            <UpdateItem
+                                icon={<PenLineIcon className="text-green-500" size={14} />}
+                                text="Peningkatan tampilan halaman form input perjadin kota"
+                            />
+                            <UpdateItem
                                 icon={<Send className="text-rose-500" size={14} />}
                                 text="Notifikasi Interaktif Halaman Login"
                             />
-                            <UpdateItem
-                                icon={<Zap className="text-amber-500" size={14} />}
-                                text="Optimasi Status Dashboard Admin"
-                            />
-                            <UpdateItem
-                                icon={<Sparkles className="text-blue-500" size={14} />}
-                                text="Pembersihan Otomatis Data Notifikasi"
-                            />
-                            <UpdateItem
-                                icon={<Bell className="text-indigo-500" size={14} />}
-                                text="Manajemen Session & Real-time Sync"
-                            />
+                            
                         </div>
                     </div>
                 </div>
@@ -89,7 +90,7 @@ export default function UpdateNotificationModal() {
                 <div className="px-7 py-6 bg-gray-50/50 flex items-center justify-between border-t border-gray-100">
                     <div className="flex items-center gap-1.5 opacity-40">
                         <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                        <span className="text-[9px] font-black tracking-tighter text-gray-900 uppercase">v2.2.0.stable</span>
+                        <span className="text-[9px] font-black tracking-tighter text-gray-900 uppercase">v2.3.0.stable</span>
                     </div>
                     <button
                         onClick={handleClose}

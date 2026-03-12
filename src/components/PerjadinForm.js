@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Zap, ZapOff, Send, TimerResetIcon } from 'lucide-react';
+import { Sparkles, Zap, ZapOff, Send, TimerResetIcon, RefreshCw, Copy } from 'lucide-react';
 import { Timestamp } from "firebase/firestore";
 import toast from "react-hot-toast";
 import { model } from "@/services/firebases";
@@ -265,6 +265,34 @@ const PerjadinForm = ({ onSubmit, isSubmitting, initialData = null, pegawaiList 
         });
     };
 
+    const handleSyncFollowers = (index = null) => {
+        setFormData(prev => {
+            if (index !== null) {
+                const newList = [...prev.namaPengikut];
+                newList[index] = {
+                    ...newList[index],
+                    tglBerangkat: prev.tanggalBerangkat,
+                    tglKembali: prev.tanggalKembali,
+                    uangHarian: prev.uangHarian,
+                    transport: prev.transport
+                };
+                return { ...prev, namaPengikut: newList };
+            } else {
+                return {
+                    ...prev,
+                    namaPengikut: (prev.namaPengikut || []).map(p => ({
+                        ...p,
+                        tglBerangkat: prev.tanggalBerangkat,
+                        tglKembali: prev.tanggalKembali,
+                        uangHarian: prev.uangHarian,
+                        transport: prev.transport
+                    }))
+                };
+            }
+        });
+        toast.success(index !== null ? "Data disinkronkan dengan Utama" : "Semua pengikut disinkronkan");
+    };
+
     const handleSetUtama = (index) => {
         setFormData(prev => {
             const currentUtama = {
@@ -369,6 +397,15 @@ const PerjadinForm = ({ onSubmit, isSubmitting, initialData = null, pegawaiList 
                         <p className="text-xs text-gray-500">Pilih Pegawai Utama dan Pengikut dalam satu daftar</p>
                     </div>
                     <div className="flex items-center gap-2">
+                         {formData.namaPengikut?.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => handleSyncFollowers()}
+                                className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-full border border-emerald-200 transition-colors uppercase tracking-wider"
+                            >
+                                <RefreshCw size={10} /> Samakan Semua
+                            </button>
+                         )}
                          <div className="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded-full uppercase tracking-wider">
                             Total: {(formData.idPegawai ? 1 : 0) + (formData.namaPengikut?.length || 0)} Orang
                          </div>
@@ -496,6 +533,14 @@ const PerjadinForm = ({ onSubmit, isSubmitting, initialData = null, pegawaiList 
                                             className="text-[10px] bg-gray-50 hover:bg-blue-50 text-blue-600 hover:text-blue-700 px-2 py-0.5 rounded border border-gray-200 hover:border-blue-200 transition-colors"
                                         >
                                             Jadikan Utama
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSyncFollowers(index)}
+                                            className="text-[10px] bg-gray-50 hover:bg-emerald-50 text-emerald-600 hover:text-emerald-700 px-2 py-0.5 rounded border border-gray-200 hover:border-emerald-200 transition-colors flex items-center gap-1"
+                                            title="Samakan data dengan Pegawai Utama"
+                                        >
+                                            <Copy size={10} /> Samakan Utama
                                         </button>
                                     </div>
                                     <button
