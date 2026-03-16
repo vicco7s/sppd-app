@@ -67,20 +67,26 @@ function drawCell(pdfDoc, x, y, w, h, text, options = {}) {
 
     const textX = align === "center" ? x + w / 2 : x + padding;
     const textAlign = align === "center" ? "center" : "left";
-
-    let textY;
-    if (verticalAlign === "middle") {
-        textY = y + h / 2 + fontSize * 0.12 * 72 / 25.4; // rough adjustment for pt to mm
-        // simplified vertical align for jspdf in mm
-        textY = y + (h / 2) + 1.5;
-    } else {
-        textY = y + padding + 3;
-    }
+    const maxW = w - padding * 2;
+    // Use a fixed line height in mm: font size (pt) * 0.352778 (pt->mm) * 1.15 spacing
+    const lineH = fontSize * 0.352778 * 1.15;
 
     if (text !== undefined && text !== null) {
-        const maxW = w - padding * 2;
         const lines = pdfDoc.splitTextToSize(String(text), maxW);
-        pdfDoc.text(lines, textX, textY, { align: textAlign });
+        // Always render at least 1 line; limit to lines that fit in cell
+        const maxLines = Math.max(1, Math.floor((h - padding) / lineH));
+        const visibleLines = lines.slice(0, maxLines);
+        const totalTextH = visibleLines.length * lineH;
+
+        let textY;
+        if (verticalAlign === "middle") {
+            // Center the text block in the cell
+            textY = y + (h - totalTextH) / 2 + lineH * 0.8;
+        } else {
+            textY = y + padding + lineH * 0.8;
+        }
+
+        pdfDoc.text(visibleLines, textX, textY, { align: textAlign });
     }
 }
 
@@ -157,10 +163,10 @@ export async function drawRincianLayout(pdfDoc, data, person, participants = [],
 
     // ========== TABEL RINCIAN BIAYA ==========
     const colNo = 10;
-    const colUraian = 55;
-    const colVolume = 45;
+    const colUraian = 50;
+    const colVolume = 40;
     const colHarga = 30;
-    const colJumlah = 20;
+    const colJumlah = 30;
     const colKet = tableWidth - colNo - colUraian - colVolume - colHarga - colJumlah;
 
     const xNo = marginLeft;
@@ -206,14 +212,12 @@ export async function drawRincianLayout(pdfDoc, data, person, participants = [],
     pdfDoc.text("1", xNo + colNo / 2, y + 5, { align: "center" });
     pdfDoc.text("2", xNo + colNo / 2, y + 10, { align: "center" });
     pdfDoc.text("3", xNo + colNo / 2, y + 17, { align: "center" });
-    pdfDoc.text("4", xNo + colNo / 2, y + 23, { align: "center" });
 
     // Column URAIAN
     pdfDoc.setFont("helvetica", "bold");
     pdfDoc.text("Uang Harian", xUraian + 2, y + 5);
     pdfDoc.text("Biaya Penginapan", xUraian + 2, y + 10);
     pdfDoc.text("Biaya Transport", xUraian + 2, y + 17);
-    pdfDoc.text("Uang", xUraian + 2, y + 23);
 
     // Column VOLUME, HARGA, JUMLAH (Conditional Rendering)
     pdfDoc.setFont("helvetica", "normal");
@@ -222,14 +226,14 @@ export async function drawRincianLayout(pdfDoc, data, person, participants = [],
     if (uangHarian > 0) {
         pdfDoc.text(`${hari} (${terbilang(hari)}) Hari`, xVolume + 2, y + 5);
         pdfDoc.text(`${hari} x ${formatRupiah(uangHarian)}`, xHarga + 2, y + 5);
-        pdfDoc.text(formatRupiah(totalUangHarian).replace("Rp ", ""), xJumlah + 2, y + 5);
+        pdfDoc.text(formatRupiah(totalUangHarian), xJumlah + 2, y + 5);
     }
 
     // Transport details
     if (transport > 0) {
         pdfDoc.text(`${hari} (${terbilang(hari)}) Hari`, xVolume + 2, y + 17);
         pdfDoc.text(`${hari} x ${formatRupiah(transport)}`, xHarga + 2, y + 17);
-        pdfDoc.text(formatRupiah(totalTransport).replace("Rp ", ""), xJumlah + 2, y + 17);
+        pdfDoc.text(formatRupiah(totalTransport), xJumlah + 2, y + 17);
     }
 
     y += rowH;
@@ -238,7 +242,7 @@ export async function drawRincianLayout(pdfDoc, data, person, participants = [],
     const totalRowH = 6;
     pdfDoc.setFont("helvetica", "bold");
     drawCell(pdfDoc, xNo, y, colNo + colUraian + colVolume + colHarga, totalRowH, "Total Biaya Perjalanan Dinas", { fontStyle: "bold" });
-    drawCell(pdfDoc, xJumlah, y, colJumlah, totalRowH, formatRupiah(grandTotal).replace("Rp ", ""), { fontStyle: "bold" });
+    drawCell(pdfDoc, xJumlah, y, colJumlah, totalRowH, formatRupiah(grandTotal), { fontStyle: "bold" });
     drawCell(pdfDoc, xKet, y, colKet, totalRowH, "");
     y += totalRowH;
 
@@ -300,7 +304,7 @@ export async function drawRincianLayout(pdfDoc, data, person, participants = [],
     y += ttHeadH;
 
     // Tanda Terima Rows
-    const ttRowH = 15;
+    const ttRowH = 15; // Increased height to accommodate long names
     const recipients = isMain ? [person] : participants;
 
     recipients.forEach((r, idx) => {
@@ -310,7 +314,14 @@ export async function drawRincianLayout(pdfDoc, data, person, participants = [],
         const rRek = r ? (r.rek || r.noRekening || "-") : "-";
 
         drawCell(pdfDoc, xttNo, y, ttColNo, ttRowH, `${idx + 1}`, { align: "center", verticalAlign: "middle" });
-        drawCell(pdfDoc, xttNama, y, ttColNama, ttRowH, `${rName}/\n${rNip}`, { verticalAlign: "middle", fontSize: 8 });
+        // Draw nama and NIP separately for precise control
+        drawCell(pdfDoc, xttNama, y, ttColNama, ttRowH, ""); // border only
+        pdfDoc.setFontSize(8);
+        pdfDoc.setFont("helvetica", "normal");
+        const namaLines = pdfDoc.splitTextToSize(rName, ttColNama - 4);
+        const nipLine = `NIP. ${rNip}`;
+        pdfDoc.text(namaLines, xttNama + 2, y + 4);
+        pdfDoc.text(nipLine, xttNama + 2, y + 4 + namaLines.length * 3.5);
         drawCell(pdfDoc, xttPangkat, y, ttColPangkat, ttRowH, rPangkat, { align: "center", verticalAlign: "middle" });
         drawCell(pdfDoc, xttJumlah, y, ttColJumlah, ttRowH, formatRupiah(grandTotal), { verticalAlign: "middle" });
         drawCell(pdfDoc, xttRek, y, ttColRek, ttRowH, rRek, { align: "center", verticalAlign: "middle" });

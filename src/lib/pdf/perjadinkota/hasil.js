@@ -45,19 +45,35 @@ export async function generateHasil(data) {
 /**
  * Split and draw text handling page breaks
  */
-function drawTextWithPagination(pdfDoc, text, x, y, maxWidth, lineHeight, pageHeight, marginBottom) {
+function drawTextWithPagination(pdfDoc, text, x, y, maxWidth, lineHeight, pageHeight, marginBottom, align = "left") {
     if (!text) return y;
 
-    const lines = pdfDoc.splitTextToSize(String(text), maxWidth);
+    const paragraphs = String(text).split("\n");
 
-    for (let i = 0; i < lines.length; i++) {
-        // Check if we need a new page
-        if (y + lineHeight > pageHeight - marginBottom) {
-            pdfDoc.addPage([215, 330]);
-            y = 20; // reset Y for new page (margin top)
+    for (let p = 0; p < paragraphs.length; p++) {
+        const lines = pdfDoc.splitTextToSize(paragraphs[p], maxWidth);
+        const totalLines = lines.length;
+
+        for (let i = 0; i < totalLines; i++) {
+            // Add new page when needed
+            if (y + lineHeight > pageHeight - marginBottom) {
+                pdfDoc.addPage([215, 330]);
+                y = 20; // top margin on new page
+            }
+
+            const isLastLineOfPara = (i === totalLines - 1);
+
+            if (align === "justify" && !isLastLineOfPara) {
+                // Justify this line: draw it as a two-line block with a dummy empty line
+                // so jsPDF stretches the text to fill maxWidth
+                pdfDoc.text(lines[i] + "\n ", x, y, { align: "justify", maxWidth: maxWidth });
+            } else {
+                // Last line of paragraph or non-justified: draw normally (left-aligned)
+                pdfDoc.text(lines[i], x, y);
+            }
+
+            y += lineHeight;
         }
-        pdfDoc.text(lines[i], x, y);
-        y += lineHeight;
     }
     return y;
 }
@@ -140,9 +156,9 @@ export async function drawHasilLayout(pdfDoc, data, person) {
     pdfDoc.text("Umum/Latar Belakang", indentC, y);
     y += lineHeight;
 
-    const latarBelakang = "Bahwa untuk mendukung tugas kedinasan di lingkungan Pemerintahan Kabupaten Tapin, perlu mengatur Tata Cara Pelaksanaan Perjalanan Dinas bagi Bupati dan Wakil Bupati, Pimpinan dan Anggota Dewan Perwakilan Rakyat Daerah, Pegawai Negeri Sipil, Non Pegawai Negeri Sipil, dan Pihak Lain dengan memperhatikan prinsip selektif, efesiensi, efektivitas, kepatutan, kewajaran, dan akuntabel, serta memperhatikan aspek pertanggungjawaban sesuai dengan biaya riil (at cost) dan lumpsum. Bahwa berdasarkan pertimbangan tersebut, ditetapkan Peraturan Bupati Tapin Nomor 01 Tahun 2024 Tentang Perjalanan Dinas. Maksud ditetapkan Peraturan Bupati ini untuk dijadikan sebagai pedoman pelaksanaan, penatausahaan, dan pertanggungjawaban serta pelaporan Perjalanan Dinas dalam rangka penyelenggaraan pemerintahan. Peraturan Bupati ini bertujuan untuk mengatur mengenai pelaksanaan, penatausahaan, dan pertanggungiawaban serta pelaporan Perjalanan Dinas bagi Pelaksana SPD yang dibebankan pada APBD. Berdasarkan penjelasan pada Bab 1 Ketentuan Umum pasal 1 Peraturan Bupati Tapin Nomor 01 Tahun 2024 Tentang Perjalanan Dinas, yang dimaksud Perjalanan Dinas adalah perjalanan dinas jabatan yang melewati batas Daerah dan/atau dalam Daerah dari tempat kedudukan ke tempat yang dituju, melaksanakan tugas, dan kembali ke tempat kedudukan semula di dalam negeri. Pelaksana Perjalanan Dinas yang selanjutnya disebut Pelaksana SPD adalah Bupati, Wakil Bupati, Pimpinan DPRD, Anggota DPRD, Pegawai ASN (PNS/Calon PNS/PPPK), dan Pihak Lain yang melaksanakan perjalanan dinas jabatan. \nPerjalanan Dinas Dalam Daerah adalah Perjalanan Dinas yang dilaksanakan di dalam Daerah yang terdiri atas pelaksanaan lebih dari 8 (delapan) jam, dan pelaksanaan sampai dengan 8 (delapan) jam.";
+    const latarBelakang = "Bahwa untuk mendukung tugas kedinasan di lingkungan Pemerintahan Kabupaten Tapin, perlu mengatur Tata Cara Pelaksanaan Perjalanan Dinas bagi Bupati dan Wakil Bupati, Pimpinan dan Anggota Dewan Perwakilan Rakyat Daerah, Pegawai Negeri Sipil, Non Pegawai Negeri Sipil, dan Pihak Lain dengan memperhatikan prinsip selektif, efesiensi, efektivitas, kepatutan, kewajaran, dan akuntabel, serta memperhatikan aspek pertanggungjawaban sesuai dengan biaya riil (at cost) dan lumpsum. Bahwa berdasarkan pertimbangan tersebut, ditetapkan Peraturan Bupati Tapin Nomor 01 Tahun 2024 Tentang Perjalanan Dinas. Maksud ditetapkan Peraturan Bupati ini untuk dijadikan sebagai pedoman pelaksanaan, penatausahaan, dan pertanggungjawaban serta pelaporan Perjalanan Dinas dalam rangka penyelenggaraan pemerintahan. Peraturan Bupati ini bertujuan untuk mengatur mengenai pelaksanaan, penatausahaan, dan pertanggungiawaban serta pelaporan Perjalanan Dinas bagi Pelaksana SPD yang dibebankan pada APBD. Berdasarkan penjelasan pada Bab 1 Ketentuan Umum pasal 1 Peraturan Bupati Tapin Nomor 01 Tahun 2024 Tentang Perjalanan Dinas, yang dimaksud Perjalanan Dinas adalah perjalanan dinas jabatan yang melewati batas Daerah dan/atau dalam Daerah dari tempat kedudukan ke tempat yang dituju, melaksanakan tugas, dan kembali ke tempat kedudukan semula di dalam negeri. Pelaksana Perjalanan Dinas yang selanjutnya disebut Pelaksana SPD adalah Bupati, Wakil Bupati, Pimpinan DPRD, Anggota DPRD, Pegawai ASN (PNS/Calon PNS/PPPK), dan Pihak Lain yang melaksanakan perjalanan dinas jabatan. Perjalanan Dinas Dalam Daerah adalah Perjalanan Dinas yang dilaksanakan di dalam Daerah yang terdiri atas pelaksanaan lebih dari 8 (delapan) jam, dan pelaksanaan sampai dengan 8 (delapan) jam.";
 
-    y = drawTextWithPagination(pdfDoc, latarBelakang, indentText, y, textWidth, lineHeight, pageHeight, marginBottom);
+    y = drawTextWithPagination(pdfDoc, latarBelakang, indentText, y, textWidth, lineHeight, pageHeight, marginBottom, "justify");
     y += lineHeight;
 
     // 2. Landasan Hukum
@@ -178,7 +194,7 @@ export async function drawHasilLayout(pdfDoc, data, person) {
     pdfDoc.text("Maksud dan Tujuan", indentC, y);
     y += lineHeight;
 
-    y = drawTextWithPagination(pdfDoc, "Mengikuti " + data.perihalSurat || "-", indentText, y, textWidth, lineHeight, pageHeight, marginBottom);
+    y = drawTextWithPagination(pdfDoc, "Mengikuti " + (data.perihalSurat || "-"), indentText, y, textWidth, lineHeight, pageHeight, marginBottom, "justify");
     y += lineHeight;
 
     // ========== B. KEGIATAN YANG DILAKSANAKAN ==========
@@ -187,7 +203,7 @@ export async function drawHasilLayout(pdfDoc, data, person) {
     pdfDoc.text("Kegiatan yang dilaksanakan", indentB, y);
     y += lineHeight;
 
-    y = drawTextWithPagination(pdfDoc, data.kegiatan || "-", indentText, y, textWidth, lineHeight, pageHeight, marginBottom);
+    y = drawTextWithPagination(pdfDoc, data.kegiatan || "-", indentText, y, textWidth, lineHeight, pageHeight, marginBottom, "justify");
     y += lineHeight;
 
     // ========== C. HASIL YANG DICAPAI ==========
@@ -206,7 +222,7 @@ export async function drawHasilLayout(pdfDoc, data, person) {
         if (y + lineHeight > pageHeight - marginBottom) { pdfDoc.addPage([215, 330]); y = 20; }
         // Simple bullet
         pdfDoc.text("-", indentText, y);
-        y = drawTextWithPagination(pdfDoc, p.trim(), indentText + 5, y, textWidth - 5, lineHeight, pageHeight, marginBottom);
+        y = drawTextWithPagination(pdfDoc, p.trim(), indentText + 5, y, textWidth - 5, lineHeight, pageHeight, marginBottom, "justify");
         y += 2;
     }
 
@@ -225,7 +241,7 @@ export async function drawHasilLayout(pdfDoc, data, person) {
     for (let p of ksParas) {
         if (y + lineHeight > pageHeight - marginBottom) { pdfDoc.addPage([215, 330]); y = 20; }
         pdfDoc.text("-", indentText, y);
-        y = drawTextWithPagination(pdfDoc, p.trim(), indentText + 5, y, textWidth - 5, lineHeight, pageHeight, marginBottom);
+        y = drawTextWithPagination(pdfDoc, p.trim(), indentText + 5, y, textWidth - 5, lineHeight, pageHeight, marginBottom, "justify");
         y += 2;
     }
 
@@ -238,7 +254,7 @@ export async function drawHasilLayout(pdfDoc, data, person) {
     y += lineHeight;
 
     const penutup = `Demikian laporan perjalanan dinas ini disusun sebagai bentuk pertanggungjawaban atas pelaksanaan tugas dalam kegiatan ${data.perihalSurat || "-"}. Diharapkan hasil kegiatan ini dapat menjadi pedoman yang akurat, realistis, dan akuntabel.`;
-    y = drawTextWithPagination(pdfDoc, penutup, indentText, y, textWidth, lineHeight, pageHeight, marginBottom);
+    y = drawTextWithPagination(pdfDoc, penutup, indentText, y, textWidth, lineHeight, pageHeight, marginBottom, "justify");
     y += lineHeight;
 
     // ========== TANDA TANGAN ==========
