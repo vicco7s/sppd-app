@@ -174,12 +174,7 @@ export async function drawNotaLayout(pdfDoc, data, pegawaiUtama, pengikutList) {
     const ttdX = pageWidth - marginRight - 70;
     const signatureWidth = 60;
 
-    let designation = "Bendahara";
-    if (data.dari) {
-        if (data.dari.toLowerCase().includes("bendahara")) designation = "Bendahara";
-        else if (data.dari.toLowerCase().includes("sekretaris")) designation = "Sekretaris Camat";
-        else if (data.dari.toLowerCase().includes("kasubag")) designation = "Kasubag Perencanaan";
-    }
+    const designation = pegawaiUtama?.jabatan || data.dari || "-";
 
     pdfDoc.setFont("helvetica", "normal");
     pdfDoc.text(designation, ttdX + signatureWidth / 2, y, { align: "center" });
