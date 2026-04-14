@@ -34,12 +34,13 @@ const CreatePerjadin = () => {
     setIsSubmitting(true);
 
     // Validation
+    const isNota = formData.dari || formData.isinota;
     const requiredFields = [
       'no', 'noSpt', 'noSpd', 'tanggal', 'idPegawai', 'tujuan',
-      'suratDari', 'tanggalSurat', 'perihalSurat', 'untuk',
+      'suratDari', isNota ? null : 'tanggalSurat', 'perihalSurat', 'untuk',
       'tanggalBerangkat', 'tanggalKembali',
       'kegiatan', 'hasil', 'kesimpulan', 'saran'
-    ];
+    ].filter(Boolean);
 
     const emptyFields = requiredFields.filter(field => !formData[field]);
 

@@ -624,13 +624,15 @@ const PerjadinForm = ({ onSubmit, isSubmitting, initialData = null, pegawaiList 
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Dasar Surat</label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2 text-xs opacity-75">Surat Dari</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2 text-xs opacity-75">
+                            {useNota ? 'Detail Lokasi' : 'Surat Dari'}
+                        </label>
                         <textarea
                             name="suratDari"
                             rows={4}
                             value={formData.suratDari}
                             onChange={handleChange}
-                            placeholder="BKAD Tapin Nomor..."
+                            placeholder={useNota ? 'Ruang Akutansi BKAD' : 'BKAD Tapin Nomor...'}
                             className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                         />
                     </div>
@@ -643,7 +645,7 @@ const PerjadinForm = ({ onSubmit, isSubmitting, initialData = null, pegawaiList 
                                 type="date"
                                 name="tanggalSurat"
                                 disabled={useNota}
-                                value={useNota ? '' : formData.tanggalSurat}
+                                value={formData.tanggalSurat}
                                 onChange={handleChange}
                                 className={`w-full px-4 py-2.5 rounded-lg border border-gray-300 outline-none transition-all ${useNota ? 'bg-gray-100 cursor-not-allowed opacity-50' : 'focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}`}
                             />
@@ -714,6 +716,11 @@ const PerjadinForm = ({ onSubmit, isSubmitting, initialData = null, pegawaiList 
                                 setUseNota(newVal);
                                 if (!newVal) {
                                     setFormData(prev => ({ ...prev, dari: '', isinota: '' }));
+                                } else {
+                                    // Jika aktifkan Nota, otomatis set tgl surat dari tgl SPT jika kosong agar tidak error validasi
+                                    if (!formData.tanggalSurat && formData.tanggal) {
+                                        setFormData(prev => ({ ...prev, tanggalSurat: prev.tanggal }));
+                                    }
                                 }
                             }}
                             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${useNota ? 'bg-blue-600' : 'bg-gray-200'}`}
