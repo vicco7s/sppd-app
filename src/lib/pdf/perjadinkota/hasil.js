@@ -78,6 +78,26 @@ function drawTextWithPagination(pdfDoc, text, x, y, maxWidth, lineHeight, pageHe
     return y;
 }
 
+function buildMaksudTujuan(data) {
+    const perihal = String(data.perihalSurat || "").trim();
+    const isNota = Boolean(data.isinota || data.dari);
+
+    if (!perihal) {
+        return "-";
+    }
+
+    if (isNota) {
+        return perihal;
+    }
+
+    const lowerPerihal = perihal.toLowerCase();
+    if (lowerPerihal.startsWith("mengikuti ")) {
+        return perihal;
+    }
+
+    return `Mengikuti ${perihal}`;
+}
+
 /**
  * Logic untuk menggambar layout Hasil Perjadin
  * @param {jsPDF} pdfDoc
@@ -194,7 +214,8 @@ export async function drawHasilLayout(pdfDoc, data, person) {
     pdfDoc.text("Maksud dan Tujuan", indentC, y);
     y += lineHeight;
 
-    y = drawTextWithPagination(pdfDoc, "Mengikuti " + (data.perihalSurat || "-"), indentText, y, textWidth, lineHeight, pageHeight, marginBottom, "justify");
+    const maksudTujuanText = buildMaksudTujuan(data);
+    y = drawTextWithPagination(pdfDoc, maksudTujuanText, indentText, y, textWidth, lineHeight, pageHeight, marginBottom, "justify");
     y += lineHeight;
 
     // ========== B. KEGIATAN YANG DILAKSANAKAN ==========

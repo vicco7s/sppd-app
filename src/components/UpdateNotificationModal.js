@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Bell, Sparkles, Zap, Calendar, Bot, Send, ArrowRight, PenBox, Pen, PenLineIcon, CloudSyncIcon, PaperclipIcon, PrinterIcon, Paperclip, Flame } from "lucide-react";
+import { X, Bell, Sparkles, Zap, Calendar, Bot, Send, ArrowRight, PenBox, Pen, PenLineIcon, CloudSyncIcon, PaperclipIcon, PrinterIcon, Paperclip, Flame, PartyPopperIcon, CloverIcon, FlagTriangleLeft, PrinterCheck, Database } from "lucide-react";
 
 export default function UpdateNotificationModal() {
     const [isOpen, setIsOpen] = useState(false);
@@ -42,7 +42,7 @@ export default function UpdateNotificationModal() {
                                     </div>
                                     <p className="text-blue-100/70 text-[10px] font-semibold flex items-center gap-1.5 ml-0.5">
                                         <Calendar size={11} />
-                                        Last Update: 14 April 2026
+                                        Last Update: 30 April 2026
                                     </p>
                                 </div>
                             </div>
@@ -66,20 +66,20 @@ export default function UpdateNotificationModal() {
 
                         <div className="grid gap-4">
                             <UpdateItem
-                                icon={<Flame className="text-red-500" size={14} />}
-                                text="Singkronisasi, penguncian tanggal surat dan perubahan label dengan pembaruan validasi"
+                                icon={<PrinterCheck className="text-green-500" size={14} />}
+                                text="Print kwitansi dalam peningkatan adminitrasi"
                             />
                             <UpdateItem
-                                icon={<PrinterIcon className="text-yellow-500" size={14} />}
-                                text="perbaikan fitur cetak untuk menghasilkan dokumen yang lebih rapi dan profesional"
+                                icon={<Database className="text-yellow-600" size={14} />}
+                                text="Menambahkan mekanisme fallback di mana jika pengurutan data gagal karena alasan teknis, sistem tetap akan menampilkan data apa adanya daripada membiarkan dropdown kosong"
                             />
                             <UpdateItem
-                                icon={<PaperclipIcon className="text-blue-500" size={14} />}
-                                text="membandingkan jadwal semua orang dalam daftar ke SPD"
+                                icon={<CloverIcon className="text-blue-500" size={14} />}
+                                text="Sekarang daftar kode rekening dari koleksi koderekening akan muncul dengan benar di dropdown"
                             />
                             <UpdateItem
-                                icon={<CloudSyncIcon className="text-orange-500" size={14} />}
-                                text="fitur Sinkronisasi Data untuk membuat penginputan jauh lebih efisien"
+                                icon={<PartyPopperIcon className="text-orange-700" size={14} />}
+                                text="Menambah Fitur Kwitansi sebagai pengganti Surat Pertanggungjawaban"
                             />
                             
                         </div>
@@ -89,8 +89,8 @@ export default function UpdateNotificationModal() {
                 {/* Clean Footer */}
                 <div className="px-7 py-6 bg-gray-50/50 flex items-center justify-between border-t border-gray-100">
                     <div className="flex items-center gap-1.5 opacity-40">
-                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                        <span className="text-[9px] font-black tracking-tighter text-gray-900 uppercase">v2.4.0.stable</span>
+                        <div className="w-1.5 h-1.5 bg-green-700 rounded-full animate-pulse" />
+                        <span className="text-[9px] font-black tracking-tighter text-gray-900 uppercase">v3.0.0.stable</span>
                     </div>
                     <button
                         onClick={handleClose}
