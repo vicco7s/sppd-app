@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy, doc, deleteDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "@/services/firebases";
+import { collection, getDocs, query, orderBy, doc, deleteDoc, setDoc, serverTimestamp, addDoc } from "firebase/firestore";
+import { db, auth } from "@/services/firebases";
 import toast from "react-hot-toast";
 import KwitansiModal from "@/components/KwitansiModal";
 import KwitansiTable from "@/components/KwitansiTable";
@@ -136,6 +136,25 @@ export default function KwitansiSection({ isAdmin = false }) {
       }
 
       await setDoc(docRef, payload, { merge: true });
+
+      // Create Notification
+      try {
+        await addDoc(collection(db, "notifications"), {
+          title: isEdit ? "Update Kwitansi" : "Kwitansi Baru",
+          message: isEdit 
+            ? `Kwitansi senilai Rp ${payload.nominal.toLocaleString('id-ID')} telah diperbarui.`
+            : `Kwitansi baru senilai Rp ${payload.nominal.toLocaleString('id-ID')} telah dibuat untuk ${payload.keperluan}.`,
+          type: isEdit ? "update" : "perjadin",
+          userName: auth.currentUser?.displayName || "User",
+          userEmail: auth.currentUser?.email || "-",
+          userUid: auth.currentUser?.uid || "system",
+          createdAt: serverTimestamp(),
+          readBy: [],
+          read: false
+        });
+      } catch (notifError) {
+        console.error("Failed to create kwitansi notification:", notifError);
+      }
       
       if (isEdit) {
         setKwitansiList((prev) => prev.map((item) => (item.id === payload.id ? payload : item)));

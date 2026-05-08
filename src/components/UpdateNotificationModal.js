@@ -1,12 +1,33 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Bell, Sparkles, Zap, Calendar, Bot, Send, ArrowRight, PenBox, Pen, PenLineIcon, CloudSyncIcon, PaperclipIcon, PrinterIcon, Paperclip, Flame, PartyPopperIcon, CloverIcon, FlagTriangleLeft, PrinterCheck, Database } from "lucide-react";
+import { X, Bell, Sparkles, Zap, Calendar, Bot, Send, ArrowRight, PenBox, Pen, PenLineIcon, CloudSyncIcon, PaperclipIcon, PrinterIcon, Paperclip, Flame, PartyPopperIcon, CloverIcon, FlagTriangleLeft, PrinterCheck, Database, History } from "lucide-react";
+import { db } from "@/services/firebases";
+import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 
 export default function UpdateNotificationModal() {
     const [isOpen, setIsOpen] = useState(false);
+    const [updates, setUpdates] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        const fetchUpdates = async () => {
+            try {
+                const q = query(collection(db, "appUpdates"), orderBy("createdAt", "desc"), limit(5));
+                const querySnapshot = await getDocs(q);
+                const updatesData = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                setUpdates(updatesData);
+            } catch (error) {
+                console.error("Error fetching updates:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUpdates();
         const timer = setTimeout(() => setIsOpen(true), 1100);
         return () => clearTimeout(timer);
     }, []);
@@ -15,7 +36,31 @@ export default function UpdateNotificationModal() {
         setIsOpen(false);
     };
 
-    if (!isOpen) return null;
+    if (!isOpen || loading || updates.length === 0) return null;
+
+    const latestUpdate = updates[0];
+    const otherUpdates = updates.slice(1);
+
+    const getIcon = (iconName) => {
+        const iconMap = {
+            Bell: <Bell size={14} />,
+            Sparkles: <Sparkles size={14} />,
+            Zap: <Zap size={14} />,
+            PrinterCheck: <PrinterCheck className="text-green-500" size={14} />,
+            Database: <Database className="text-yellow-600" size={14} />,
+            CloverIcon: <CloverIcon className="text-blue-500" size={14} />,
+            PartyPopperIcon: <PartyPopperIcon className="text-orange-700" size={14} />,
+            Flame: <Flame size={14} />,
+            Bot: <Bot size={14} />,
+            Send: <Send size={14} />,
+            Calendar: <Calendar size={14} />,
+            Pen: <Pen size={14} />,
+            Paperclip: <Paperclip size={14} />,
+            PrinterIcon: <PrinterIcon size={14} />,
+            CloudSyncIcon: <CloudSyncIcon size={14} />,
+        };
+        return iconMap[iconName] || <Zap size={14} />;
+    };
 
     return (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-[200] p-4 animate-in fade-in duration-300">
@@ -42,7 +87,7 @@ export default function UpdateNotificationModal() {
                                     </div>
                                     <p className="text-blue-100/70 text-[10px] font-semibold flex items-center gap-1.5 ml-0.5">
                                         <Calendar size={11} />
-                                        Last Update: 30 April 2026
+                                        Last Update: {latestUpdate.date || "Terbaru"}
                                     </p>
                                 </div>
                             </div>
@@ -57,32 +102,52 @@ export default function UpdateNotificationModal() {
                 </div>
 
                 {/* Simplified Content Area */}
-                <div className="p-7 bg-white">
-                    <div className="space-y-5">
-                        <div className="flex items-center gap-2 mb-1">
-                            <div className="w-1 h-3 bg-blue-600 rounded-full" />
-                            <span className="text-blue-600 text-[10px] font-black uppercase tracking-widest">Fitur Baru & Perbaikan</span>
+                <div className="p-7 bg-white max-h-[400px] overflow-y-auto custom-scrollbar">
+                    <div className="space-y-8">
+                        {/* Latest Update */}
+                        <div className="space-y-5">
+                            <div className="flex items-center gap-2 mb-1">
+                                <div className="w-1 h-3 bg-blue-600 rounded-full" />
+                                <span className="text-blue-600 text-[10px] font-black uppercase tracking-widest">Fitur Terbaru ({latestUpdate.version || "v3.0"})</span>
+                            </div>
+
+                            <div className="grid gap-4">
+                                {latestUpdate.items?.map((item, idx) => (
+                                    <UpdateItem
+                                        key={idx}
+                                        icon={getIcon(item.icon)}
+                                        text={item.text}
+                                    />
+                                ))}
+                            </div>
                         </div>
 
-                        <div className="grid gap-4">
-                            <UpdateItem
-                                icon={<PrinterCheck className="text-green-500" size={14} />}
-                                text="Print kwitansi dalam peningkatan adminitrasi"
-                            />
-                            <UpdateItem
-                                icon={<Database className="text-yellow-600" size={14} />}
-                                text="Menambahkan mekanisme fallback di mana jika pengurutan data gagal karena alasan teknis, sistem tetap akan menampilkan data apa adanya daripada membiarkan dropdown kosong"
-                            />
-                            <UpdateItem
-                                icon={<CloverIcon className="text-blue-500" size={14} />}
-                                text="Sekarang daftar kode rekening dari koleksi koderekening akan muncul dengan benar di dropdown"
-                            />
-                            <UpdateItem
-                                icon={<PartyPopperIcon className="text-orange-700" size={14} />}
-                                text="Menambah Fitur Kwitansi sebagai pengganti Surat Pertanggungjawaban"
-                            />
-                            
-                        </div>
+                        {/* History / Previous Updates */}
+                        {otherUpdates.length > 0 && (
+                            <div className="space-y-6 pt-4 border-t border-gray-50">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <History className="text-gray-400" size={14} />
+                                    <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Riwayat Update</span>
+                                </div>
+                                
+                                {otherUpdates.map((update) => (
+                                    <div key={update.id} className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[11px] font-bold text-gray-900 bg-gray-100 px-2 py-0.5 rounded-md">{update.version}</span>
+                                            <span className="text-[10px] text-gray-400 font-medium">{update.date}</span>
+                                        </div>
+                                        <div className="grid gap-3 pl-2 border-l-2 border-gray-50">
+                                            {update.items?.map((item, idx) => (
+                                                <div key={idx} className="flex gap-3 items-start">
+                                                    <div className="mt-1 w-1 h-1 bg-gray-300 rounded-full shrink-0" />
+                                                    <p className="text-[11px] text-gray-500 font-medium leading-relaxed">{item.text}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -90,7 +155,7 @@ export default function UpdateNotificationModal() {
                 <div className="px-7 py-6 bg-gray-50/50 flex items-center justify-between border-t border-gray-100">
                     <div className="flex items-center gap-1.5 opacity-40">
                         <div className="w-1.5 h-1.5 bg-green-700 rounded-full animate-pulse" />
-                        <span className="text-[9px] font-black tracking-tighter text-gray-900 uppercase">v3.0.0.stable</span>
+                        <span className="text-[9px] font-black tracking-tighter text-gray-900 uppercase">{latestUpdate.version || "v3.0.0.stable"}</span>
                     </div>
                     <button
                         onClick={handleClose}

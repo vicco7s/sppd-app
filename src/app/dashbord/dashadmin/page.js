@@ -14,6 +14,7 @@ import { updateDoc, getDoc } from "firebase/firestore";
 import { useInactivityLogout, clearAuthCache } from "@/hooks/useInactivityLogout";
 import Topbar from "@/components/Topbar";
 import KwitansiSection from "@/components/KwitansiSection";
+import UpdateLogSection from "@/components/UpdateLogSection";
 
 export default function DashadminPage() {
     useInactivityLogout(1800000); // 30 minutes auto logout
@@ -288,6 +289,13 @@ export default function DashadminPage() {
                     </button>
 
                     <button
+                        onClick={() => setActiveTab("update-log")}
+                        className={`w-full text-left flex items-center gap-3 p-2 rounded hover:bg-gray-100 ${activeTab === 'update-log' ? 'bg-gray-100 font-semibold' : 'text-gray-800'}`}
+                    >
+                        Update Log
+                    </button>
+
+                    <button
                         onClick={() => setActiveTab("perjadin-umum-dalam-kota")}
                         className={`w-full text-left flex items-center gap-3 p-2 rounded hover:bg-gray-100 ${activeTab === 'perjadin-umum-dalam-kota' ? 'bg-gray-100 font-semibold' : 'text-gray-800'}`}
                     >
@@ -338,6 +346,9 @@ export default function DashadminPage() {
 
                         {/* Content for "Kwitansi" */}
                         {activeTab === "kwitansi" && <KwitansiSection isAdmin={true} />}
+
+                        {/* Content for "Update Log" */}
+                        {activeTab === "update-log" && <UpdateLogSection />}
 
                         {activeTab === "pegawai" && (
                             <div className="bg-white p-6 rounded shadow text-gray-800">
