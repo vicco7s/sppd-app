@@ -22,9 +22,7 @@ export default function Topbar({ user, role = "User" }) {
     // Auto-cleanup old notifications (older than 30 days) - Admin Only
     useEffect(() => {
         const cleanupOldNotifs = async () => {
-            if (role !== "Admin") return;
-
-            // Run only once per day locally
+            // Run only once per day locally per user to keep DB clean
             const lastCleanup = localStorage.getItem("last_notif_cleanup");
             const today = new Date().toDateString();
             if (lastCleanup === today) return;

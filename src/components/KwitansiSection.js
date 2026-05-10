@@ -143,7 +143,7 @@ export default function KwitansiSection({ isAdmin = false }) {
           title: isEdit ? "Update Kwitansi" : "Kwitansi Baru",
           message: isEdit 
             ? `Kwitansi senilai Rp ${payload.nominal.toLocaleString('id-ID')} telah diperbarui.`
-            : `Kwitansi baru senilai Rp ${payload.nominal.toLocaleString('id-ID')} telah dibuat untuk ${payload.keperluan}.`,
+            : `Kwitansi baru senilai Rp ${payload.nominal.toLocaleString('id-ID')} telah dibuat untuk ${payload.namaRekening}.`,
           type: isEdit ? "update" : "perjadin",
           userName: auth.currentUser?.displayName || "User",
           userEmail: auth.currentUser?.email || "-",
