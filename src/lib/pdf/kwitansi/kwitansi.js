@@ -143,47 +143,67 @@ export async function generateKwitansiPDF(data) {
 
     y += 5;
     // Financial Details
-    const nominalFormatted = formatRupiah(data.nominal);
+    const nominalBruto = Number(data.nominal) || 0;
+    
+    // Safety check: force 0 tax if it's a Perjadin account
+    const nameLow = (data.namaRekeningBelanja || "").toLowerCase();
+    const codeLow = (data.kodeRekening || "").toLowerCase();
+    const isExempt = nameLow.includes("perjalanan dinas") || codeLow.includes("5.1.02.04.01");
+
+    const valPPN = (!isExempt && data.ppn) ? (nominalBruto * data.ppn / 100) : 0;
+    const valPPH22 = (!isExempt && data.pph22) ? (nominalBruto * 0.015) : 0;
+    const valPPH23 = (!isExempt && data.pph23) ? (nominalBruto * 0.02) : 0;
+    const nominalNetto = nominalBruto - valPPN - valPPH22 - valPPH23;
+
     pdfDoc.setFont("helvetica", "bold");
     pdfDoc.text("Bruto", marginLeft, y);
     pdfDoc.text(":", marginLeft + 35, y);
-    pdfDoc.text(nominalFormatted, marginLeft + 38, y);
+    pdfDoc.text(formatRupiah(nominalBruto), marginLeft + 38, y);
     y += 5;
 
     pdfDoc.setFont("helvetica", "normal");
     pdfDoc.text("Potongan Pajak :", marginLeft, y);
     y += 5;
-    pdfDoc.text("PPN", marginLeft + 5, y);
+    pdfDoc.text(`PPN ${data.ppn ? `(${data.ppn}%)` : ""}`, marginLeft + 5, y);
     pdfDoc.text(":", marginLeft + 35, y);
-    pdfDoc.text("Rp. -", marginLeft + 38, y);
+    pdfDoc.text(valPPN > 0 ? formatRupiah(valPPN) : "Rp. -", marginLeft + 38, y);
     y += 5;
     pdfDoc.text("PPh Ps.22", marginLeft + 5, y);
     pdfDoc.text(":", marginLeft + 35, y);
-    pdfDoc.text("Rp. -", marginLeft + 38, y);
+    pdfDoc.text(valPPH22 > 0 ? formatRupiah(valPPH22) : "Rp. -", marginLeft + 38, y);
     y += 5;
     pdfDoc.text("PPh Ps.23", marginLeft + 5, y);
     pdfDoc.text(":", marginLeft + 35, y);
-    pdfDoc.text("Rp. -", marginLeft + 38, y);
+    pdfDoc.text(valPPH23 > 0 ? formatRupiah(valPPH23) : "Rp. -", marginLeft + 38, y);
     y += 7;
 
     pdfDoc.setFont("helvetica", "bold");
     pdfDoc.text("Netto", marginLeft, y);
     pdfDoc.text(":", marginLeft + 35, y);
-    pdfDoc.text(nominalFormatted, marginLeft + 38, y);
+    pdfDoc.text(formatRupiah(nominalNetto), marginLeft + 38, y);
 
     y += 5;
-    // Footer separator
+    // --- PENGATURAN PANJANG GARIS PEMBATAS (DI ATAS TERBILANG) ---
+    // Ubah nilai 0 di bawah ini untuk memperpendek garis (makin besar makin pendek)
+    const kurangPambatas = 100; 
+    const garisPembatasX = pageWidth - marginRight - kurangPambatas;
+
     pdfDoc.setLineWidth(0.5);
-    pdfDoc.line(marginLeft, y, pageWidth - marginRight, y);
+    pdfDoc.line(marginLeft, y, garisPembatasX, y);
     pdfDoc.setLineWidth(0.2);
-    pdfDoc.line(marginLeft, y + 0.8, pageWidth - marginRight, y + 0.8);
+    pdfDoc.line(marginLeft, y + 0.8, garisPembatasX, y + 0.8);
     y += 5;
 
     pdfDoc.setFont("helvetica", "bolditalic");
-    pdfDoc.text(`Terbilang   ${nominalFormatted}`, marginLeft, y);
+    pdfDoc.text(`Terbilang   ${formatRupiah(nominalNetto)}`, marginLeft, y);
     y += 2;
-    pdfDoc.line(marginLeft, y + 1, pageWidth - marginRight, y + 1);
-    pdfDoc.line(marginLeft, y + 2, pageWidth - marginRight, y + 2);
+    // --- PENGATURAN PANJANG GARIS TERBILANG ---
+    // Ubah nilai 100 di bawah ini untuk memperpajang/memperpendek garis (makin besar makin pendek)
+    const penguranganPanjang = 100; 
+    const garisAkhirX = pageWidth - marginRight - penguranganPanjang;
+
+    pdfDoc.line(marginLeft, y + 1, garisAkhirX, y + 1); // Garis pertama
+    pdfDoc.line(marginLeft, y + 2, garisAkhirX, y + 2); // Garis kedua
 
     y += 15;
     // Signature Table Area
@@ -205,7 +225,7 @@ export async function generateKwitansiPDF(data) {
 
     // PPTK Name (Hardcoded from image as sample or use generic)
     pdfDoc.setFont("helvetica", "bold");
-    pdfDoc.text("NILI", marginLeft + boxWidth / 2, y + boxHeight - 7, { align: "center" });
+    pdfDoc.text("Nili, S.Sos", marginLeft + boxWidth / 2, y + boxHeight - 7, { align: "center" });
     pdfDoc.setFont("helvetica", "normal");
     pdfDoc.text("NIP. 198409302014062004", marginLeft + boxWidth / 2, y + boxHeight - 3, { align: "center" });
 
@@ -226,11 +246,11 @@ export async function generateKwitansiPDF(data) {
 
     pdfDoc.text("Mengetahui :", marginLeft + boxWidth / 2, y + 5, { align: "center" });
     pdfDoc.text("Atasan Langsung Bendahara Pengeluaran", marginLeft + boxWidth / 2, y + 9, { align: "center" });
-    pdfDoc.text("Salam Babaris Kabupaten Tapin", marginLeft + boxWidth / 2, y + 13, { align: "center" });
+    pdfDoc.text("Kecamatan Salam Babaris Kabupaten Tapin", marginLeft + boxWidth / 2, y + 13, { align: "center" });
 
     pdfDoc.text(`Lunas Dibayar Tanggal : ..................................`, marginLeft + boxWidth + 5, y + 5);
     pdfDoc.text("Bendahara Pengeluaran", marginLeft + boxWidth + boxWidth / 2, y + 9, { align: "center" });
-    pdfDoc.text("Salam Babaris Kabupaten Tapin,", marginLeft + boxWidth + boxWidth / 2, y + 13, { align: "center" });
+    pdfDoc.text("Kecamatan Salam Babaris Kabupaten Tapin,", marginLeft + boxWidth + boxWidth / 2, y + 13, { align: "center" });
 
     // Hardcoded Atasan and Bendahara from image
     pdfDoc.setFont("helvetica", "bold");

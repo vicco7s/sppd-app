@@ -14,7 +14,8 @@ import {
   Landmark,
   PenBox,
   Search,
-  Trash2
+  Trash2,
+  Sparkles
 } from "lucide-react";
 
 const initialFormData = {
@@ -30,7 +31,10 @@ const initialFormData = {
   namaBank: "",
   nominal: "",
   tanggal: "",
-  keperluan: "", // Add keperluan
+  keperluan: "", 
+  ppn: 0, // 0, 11, or 12
+  pph22: false,
+  pph23: false,
 };
 
 const BANK_OPTIONS = [
@@ -126,6 +130,17 @@ export default function KwitansiForm({
     }
   }, [formData.pegawaiId, pegawaiList]);
 
+  useEffect(() => {
+    if (isPerjadinAccount()) {
+      setFormData(prev => ({
+        ...prev,
+        ppn: 0,
+        pph22: false,
+        pph23: false
+      }));
+    }
+  }, [formData.kodeRekening, formData.namaRekeningBelanja]);
+
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -177,6 +192,12 @@ export default function KwitansiForm({
     }
   };
 
+
+  const isPerjadinAccount = () => {
+    const name = formData.namaRekeningBelanja?.toLowerCase() || "";
+    const code = formData.kodeRekening?.toLowerCase() || "";
+    return name.includes("perjalanan dinas") || code.includes("5.1.02.04.01");
+  };
 
   const internalSubmit = async (event) => {
     event.preventDefault();
@@ -586,6 +607,113 @@ export default function KwitansiForm({
                 />
               </div>
             </label>
+
+            {/* Tax Section for Nominal > 2 Million */}
+            {Number(formData.nominal) >= 2000000 && (
+              isPerjadinAccount() ? (
+                <div className="col-span-full bg-blue-50 rounded-2xl p-4 border border-blue-100 flex items-start gap-3 animate-in fade-in duration-300">
+                  <div className="p-2 bg-white rounded-lg shadow-sm">
+                    <Info className="text-blue-600" size={16} />
+                  </div>
+                  <div>
+                    <h4 className="text-[11px] font-bold text-blue-900 uppercase tracking-wider mb-0.5">Bebas Pajak</h4>
+                    <p className="text-[10px] text-blue-700 leading-relaxed">
+                      Akun <span className="font-bold underline">Perjalanan Dinas</span> tidak dikenakan potongan PPN/PPh meskipun nominal di atas 2 Juta sesuai peraturan perpajakan yang berlaku.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="col-span-full bg-violet-50/50 rounded-2xl p-5 border border-violet-100 space-y-4 animate-in slide-in-from-top-2 duration-300">
+                  <div className="flex items-center gap-2 pb-2 border-b border-violet-100">
+                    <div className="p-1 bg-violet-100 rounded-md">
+                      <Sparkles className="text-violet-600" size={14} />
+                    </div>
+                    <h4 className="text-[11px] font-bold text-violet-900 uppercase tracking-widest">Potongan Pajak (Nominal {'>'}= 2jt)</h4>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* PPN Selector */}
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-bold text-gray-500 uppercase">Pajak PPN</span>
+                      <div className="flex gap-2">
+                        {[0, 11, 12].map((val) => (
+                          <button
+                            key={val}
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, ppn: val }))}
+                            className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold border transition-all ${
+                              formData.ppn === val 
+                                ? "bg-violet-600 text-white border-violet-600 shadow-md shadow-violet-600/20" 
+                                : "bg-white text-gray-500 border-gray-200 hover:border-violet-400"
+                            }`}
+                          >
+                            {val === 0 ? "Tanpa PPN" : `${val}%`}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* PPH 22 Checkbox */}
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-bold text-gray-500 uppercase">Pajak PPH 22</span>
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, pph22: !prev.pph22 }))}
+                        className={`w-full py-1.5 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-2 ${
+                          formData.pph22 
+                            ? "bg-violet-600 text-white border-violet-600 shadow-md shadow-violet-600/20" 
+                            : "bg-white text-gray-500 border-gray-200 hover:border-violet-400"
+                        }`}
+                      >
+                        {formData.pph22 ? "PPH 22 (1.5%) Aktif" : "Aktifkan PPH 22 (1.5%)"}
+                      </button>
+                    </div>
+
+                    {/* PPH 23 Checkbox */}
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-bold text-gray-500 uppercase">Pajak PPH 23</span>
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, pph23: !prev.pph23 }))}
+                        className={`w-full py-1.5 rounded-lg text-[10px] font-bold border transition-all flex items-center justify-center gap-2 ${
+                          formData.pph23 
+                            ? "bg-violet-600 text-white border-violet-600 shadow-md shadow-violet-600/20" 
+                            : "bg-white text-gray-500 border-gray-200 hover:border-violet-400"
+                        }`}
+                      >
+                        {formData.pph23 ? "PPH 23 (2%) Aktif" : "Aktifkan PPH 23 (2%)"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Calculation Summary */}
+                  <div className="pt-2 flex flex-wrap gap-x-6 gap-y-2 border-t border-violet-100">
+                    {formData.ppn > 0 && (
+                      <div className="text-[10px] text-gray-600">
+                        PPN ({formData.ppn}%): <span className="font-bold text-violet-700">Rp {(Number(formData.nominal) * formData.ppn / 100).toLocaleString('id-ID')}</span>
+                      </div>
+                    )}
+                    {formData.pph22 && (
+                      <div className="text-[10px] text-gray-600">
+                        PPH 22 (1.5%): <span className="font-bold text-violet-700">Rp {(Number(formData.nominal) * 0.015).toLocaleString('id-ID')}</span>
+                      </div>
+                    )}
+                    {formData.pph23 && (
+                      <div className="text-[10px] text-gray-600">
+                        PPH 23 (2%): <span className="font-bold text-violet-700">Rp {(Number(formData.nominal) * 0.02).toLocaleString('id-ID')}</span>
+                      </div>
+                    )}
+                    <div className="text-[10px] text-gray-900 ml-auto">
+                      Total Potongan: <span className="font-bold text-red-600">Rp {(
+                        (formData.ppn > 0 ? Number(formData.nominal) * formData.ppn / 100 : 0) +
+                        (formData.pph22 ? Number(formData.nominal) * 0.015 : 0) +
+                        (formData.pph23 ? Number(formData.nominal) * 0.02 : 0)
+                      ).toLocaleString('id-ID')}</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            )}
             <label className="block space-y-1.5">
               <span className="text-xs font-bold text-gray-500 uppercase ml-1">Tanggal Kwitansi</span>
               <div className="relative">
