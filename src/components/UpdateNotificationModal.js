@@ -43,21 +43,23 @@ export default function UpdateNotificationModal() {
 
     const getIcon = (iconName) => {
         const iconMap = {
-            Bell: <Bell size={14} />,
-            Sparkles: <Sparkles size={14} />,
-            Zap: <Zap size={14} />,
+            Bell: <Bell size={14} className="text-yellow-500" />,
+            Sparkles: <Sparkles size={14} className="text-indigo-600" />,
+            Zap: <Zap size={14} className="text-lime-500"/>,
             PrinterCheck: <PrinterCheck className="text-green-500" size={14} />,
-            Database: <Database className="text-yellow-600" size={14} />,
+            Database: <Database className="text-gray-500" size={14} />,
             CloverIcon: <CloverIcon className="text-blue-500" size={14} />,
             PartyPopperIcon: <PartyPopperIcon className="text-orange-700" size={14} />,
-            Flame: <Flame size={14} />,
-            Bot: <Bot size={14} />,
-            Send: <Send size={14} />,
-            Calendar: <Calendar size={14} />,
-            Pen: <Pen size={14} />,
-            Paperclip: <Paperclip size={14} />,
-            PrinterIcon: <PrinterIcon size={14} />,
-            CloudSyncIcon: <CloudSyncIcon size={14} />,
+            Flame: <Flame size={14} className="text-red-500"/>,
+            Bot: <Bot size={14} className="text-indigo-700"/>,
+            Send: <Send size={14} className="text-indigo-600"/>,
+            Calendar: <Calendar size={14} className="text-yellow-500"/>,
+            Pen: <Pen size={14} className="text-gray-500"/>,
+            Paperclip: <Paperclip size={14} className="text-blue-500"/>,
+            PrinterIcon: <PrinterIcon size={14} className="text-green-500"/>,
+            CloudSyncIcon: <CloudSyncIcon size={14} className="text-green-500"/>,
+            FlagTriangleLeft: <FlagTriangleLeft size={14} className="text-blue-500"/>,
+            History: <History size={14} className="text-blue-500"/>,
         };
         return iconMap[iconName] || <Zap size={14} />;
     };
@@ -108,7 +110,7 @@ export default function UpdateNotificationModal() {
                         <div className="space-y-5">
                             <div className="flex items-center gap-2 mb-1">
                                 <div className="w-1 h-3 bg-blue-600 rounded-full" />
-                                <span className="text-blue-600 text-[10px] font-black uppercase tracking-widest">Fitur Terbaru ({latestUpdate.version || "v3.0"})</span>
+                                <span className="text-blue-600 text-[10px] font-black uppercase tracking-widest">Fitur & Pembaruan ({latestUpdate.version || "v3.0"})</span>
                             </div>
 
                             <div className="grid gap-4">

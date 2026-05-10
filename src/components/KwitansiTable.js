@@ -12,9 +12,21 @@ export default function KwitansiTable({ items, loading, onDelete, onEdit, onTogg
         <h3 className="text-lg font-bold text-gray-800">Daftar Kwitansi</h3>
         <button
           onClick={onToggleForm}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm bg-blue-600 text-white hover:bg-blue-700"
+          className="relative group overflow-hidden inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 bg-gradient-to-br from-blue-600/90 to-blue-700/90 backdrop-blur-lg border border-white/20 shadow-lg shadow-blue-500/30 text-white hover:shadow-blue-500/50 hover:scale-[1.02] active:scale-95 active:shadow-inner"
         >
-          <Plus size={16} /> Tambah Kwitansi
+          {/* Water wave effect on hover */}
+          <div className="absolute inset-0 overflow-hidden opacity-0 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none">
+            <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-white rounded-[38%] animate-wave" />
+          </div>
+          
+          {/* Liquid highlight highlight */}
+          <span className="absolute inset-0 w-full h-full bg-gradient-to-tr from-white/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          
+          <Plus size={18} className="relative z-10 transition-transform duration-500 group-hover:rotate-180" />
+          <span className="relative z-10">Tambah Kwitansi</span>
+          
+          {/* Click Ripple effect (via CSS active) */}
+          <span className="absolute inset-0 rounded-xl bg-white/30 scale-0 transition-transform duration-500 group-active:scale-[2.5] opacity-0 group-active:opacity-100 pointer-events-none" />
         </button>
       </div>
 
@@ -53,25 +65,26 @@ export default function KwitansiTable({ items, loading, onDelete, onEdit, onTogg
                 <td className="px-4 py-3 border-b text-sm text-gray-700">{item.tanggal || "-"}</td>
                 <td className="px-4 py-3 border-b text-sm text-center">
                   <div className="flex items-center justify-center gap-2">
-                    <button
-                      onClick={() => generateKwitansiPDF(item)}
-                      className="inline-flex items-center justify-center rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white hover:bg-green-700 transition"
-                      type="button"
-                      title="Cetak Kwitansi"
-                    >
-                      <Printer size={14} />
-                    </button>
+                    
                     <button
                       onClick={() => onEdit(item)}
-                      className="inline-flex items-center justify-center rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-600 transition"
+                      className="inline-flex items-center justify-center rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-700 transition"
                       type="button"
                       title="Edit Kwitansi"
                     >
                       <Pencil size={14} />
                     </button>
                     <button
+                      onClick={() => generateKwitansiPDF(item)}
+                      className="inline-flex items-center justify-center rounded-lg bg-green-500 px-3 py-2 text-xs font-semibold text-white hover:bg-green-700 transition"
+                      type="button"
+                      title="Cetak Kwitansi"
+                    >
+                      <Printer size={14} />
+                    </button>
+                    <button
                       onClick={() => onDelete(item.id)}
-                      className="inline-flex items-center justify-center rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 transition"
+                      className="inline-flex items-center justify-center rounded-lg bg-red-500 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 transition"
                       type="button"
                       title="Hapus Kwitansi"
                     >

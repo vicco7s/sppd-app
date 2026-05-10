@@ -1,14 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Bell, ChevronDown, ChevronRight, LogOut, User, Edit, Trash2, Printer } from "lucide-react";
+import { Bell, ChevronDown, ChevronRight, LogOut, User, Edit, Trash2, Printer, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/services/firebases";
 import { signOut, onAuthStateChanged } from "firebase/auth";
-import { collection, getDocs, deleteDoc, doc, query, orderBy, getDoc, onSnapshot, limit, serverTimestamp, addDoc } from "firebase/firestore";
+import { collection, getDocs, deleteDoc, doc, query, orderBy, getDoc, onSnapshot, limit, serverTimestamp, addDoc, updateDoc } from "firebase/firestore";
 import { toast } from "react-hot-toast";
 import { generateSPPD } from "@/lib/pdf/perjadinkota/page";
 import { generateNotaDinas } from "@/lib/pdf/perjadinkota/nota";
+import PegawaiModal from "@/components/PegawaiModal";
 import { useInactivityLogout, clearAuthCache } from "@/hooks/useInactivityLogout";
 import Topbar from "@/components/Topbar";
 import KwitansiSection from "@/components/KwitansiSection";
@@ -25,6 +26,12 @@ export default function DashuserPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [printModalItem, setPrintModalItem] = useState(null);
+  const [pegawaiList, setPegawaiList] = useState([]);
+
+  // Modal State for Pegawai
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [selectedPegawai, setSelectedPegawai] = useState(null);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (u) => {
@@ -68,22 +75,109 @@ export default function DashuserPage() {
         } finally {
           setLoading(false);
         }
+      } else if (activeTab === "pegawai") {
+        setLoading(true);
+        try {
+          const q = query(collection(db, "pegawai"), orderBy("nama", "asc"));
+          const querySnapshot = await getDocs(q);
+          const data = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          setPegawaiList(data);
+        } catch (error) {
+          console.error("Error fetching data:", error);
+          toast.error("Gagal mengambil data pegawai");
+        } finally {
+          setLoading(false);
+        }
       }
     };
 
     fetchData();
   }, [activeTab]);
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, type = "perjadinkota") => {
     if (window.confirm("Apakah Anda yakin ingin menghapus data ini?")) {
       try {
-        await deleteDoc(doc(db, "perjadinkota", id));
-        setPerjadinList(prev => prev.filter(item => item.id !== id));
+        await deleteDoc(doc(db, type, id));
+        if (type === "pegawai") {
+          setPegawaiList(prev => prev.filter(item => item.id !== id));
+        } else {
+          setPerjadinList(prev => prev.filter(item => item.id !== id));
+        }
         toast.success("Data berhasil dihapus");
       } catch (error) {
         console.error("Error deleting document:", error);
         toast.error("Gagal menghapus data");
       }
+    }
+  };
+
+  const handleSavePegawai = async (formData) => {
+    setIsSaving(true);
+    try {
+      const dataToStore = {
+        ...formData,
+        tgllahir: formData.tgllahir ? new Date(formData.tgllahir) : null
+      };
+
+      if (selectedPegawai) {
+        // UPDATE
+        await updateDoc(doc(db, "pegawai", selectedPegawai.id), dataToStore);
+
+        // Create Notification for Pegawai Update
+        try {
+          await addDoc(collection(db, "notifications"), {
+            title: "Update Data Pegawai",
+            message: `Data pegawai ${formData.nama} telah diperbarui oleh ${auth.currentUser?.displayName || 'User'}.`,
+            type: "update",
+            userName: auth.currentUser?.displayName || "User",
+            userEmail: auth.currentUser?.email || "-",
+            userUid: auth.currentUser?.uid,
+            createdAt: serverTimestamp(),
+            read: false
+          });
+        } catch (notifErr) {
+          console.error("Failed to create pegawai update notification:", notifErr);
+        }
+
+        setPegawaiList(prev => prev.map(item => item.id === selectedPegawai.id ? { ...item, ...formData, tgllahir: dataToStore.tgllahir } : item));
+        toast.success("Data pegawai berhasil diperbarui");
+      } else {
+        // CREATE
+        const docRef = await addDoc(collection(db, "pegawai"), {
+          ...dataToStore,
+          createdAt: serverTimestamp()
+        });
+
+        // Create Notification
+        try {
+          await addDoc(collection(db, "notifications"), {
+            title: "Pegawai Baru",
+            message: `Pegawai baru ${formData.nama} telah ditambahkan oleh ${auth.currentUser?.displayName || 'User'}.`,
+            type: "pegawai",
+            userName: auth.currentUser?.displayName || "User",
+            userEmail: auth.currentUser?.email || "-",
+            userUid: auth.currentUser?.uid,
+            createdAt: serverTimestamp(),
+            read: false
+          });
+        } catch (notifErr) {
+          console.error("Failed to create notification:", notifErr);
+        }
+
+        setPegawaiList(prev => [{ id: docRef.id, ...formData, tgllahir: dataToStore.tgllahir }, ...prev]);
+        toast.success("Pegawai berhasil ditambahkan");
+      }
+
+      setIsModalOpen(false);
+      setSelectedPegawai(null);
+    } catch (error) {
+      console.error("Error saving employee:", error);
+      toast.error("Gagal menyimpan data pegawai");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -117,10 +211,11 @@ export default function DashuserPage() {
   {/* Fungsi Print Menu */ }
 
   // Pagination logic
-  const totalPages = Math.ceil(perjadinList.length / itemsPerPage);
+  const currentList = activeTab === "pegawai" ? pegawaiList : perjadinList;
+  const totalPages = Math.ceil(currentList.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedData = perjadinList.slice(startIndex, endIndex);
+  const paginatedData = currentList.slice(startIndex, endIndex);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -128,8 +223,8 @@ export default function DashuserPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white shadow h-screen p-4 text-gray-800 flex flex-col">
+      {/* Sidebar - Sticky for fixed height alignment */}
+      <aside className="w-64 bg-white shadow-lg h-screen sticky top-0 p-4 text-gray-800 flex flex-col shrink-0">
         <div className="mb-6 flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-600 rounded-full" />
           <div>
@@ -151,6 +246,13 @@ export default function DashuserPage() {
             className={`w-full text-left flex items-center gap-3 p-2 rounded hover:bg-gray-100 ${activeTab === 'kwitansi' ? 'bg-gray-100 font-semibold' : 'text-gray-800'}`}
           >
             Kwitansi
+          </button>
+
+          <button
+            onClick={() => setActiveTab("pegawai")}
+            className={`w-full text-left flex items-center gap-3 p-2 rounded hover:bg-gray-100 ${activeTab === 'pegawai' ? 'bg-gray-100 font-semibold' : 'text-gray-800'}`}
+          >
+            Pegawai
           </button>
 
           <button
@@ -187,13 +289,13 @@ export default function DashuserPage() {
       </aside>
 
       {/* Main area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-h-screen relative">
         {/* Topbar */}
         <Topbar user={user} role="User" />
 
-        {/* Content */}
-        <main className="p-6">
-          <div className="max-w-7xl mx-auto">
+        {/* Content - Ensure it takes remaining height */}
+        <main className="flex-1 p-6 flex flex-col">
+          <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col">
             {activeTab === "overview" && (
               <div className="col-span-1">
                 <div className="p-9 bg-white rounded shadow h-20 flex items-center justify-center text-gray-800">
@@ -205,15 +307,144 @@ export default function DashuserPage() {
             {/* Content for "Kwitansi" */}
             {activeTab === "kwitansi" && <KwitansiSection isAdmin={false} />}
 
+            {/* Content for "Pegawai" */}
+            {activeTab === "pegawai" && (
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-gray-800 flex-1 flex flex-col min-h-[calc(100vh-180px)]">
+                <div className="flex justify-between items-center mb-6 border-b border-gray-50 pb-4">
+                  <h2 className="text-xl font-bold text-gray-900">List Data Pegawai</h2>
+                  <button
+                    onClick={() => {
+                      setSelectedPegawai(null);
+                      setIsModalOpen(true);
+                    }}
+                    className="relative group overflow-hidden inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 bg-gradient-to-br from-blue-600/90 to-blue-700/90 backdrop-blur-lg border border-white/20 shadow-lg shadow-blue-500/30 text-white hover:shadow-blue-500/50 hover:scale-[1.02] active:scale-95 active:shadow-inner"
+                  >
+                    {/* Water wave effect on hover */}
+                    <div className="absolute inset-0 overflow-hidden opacity-0 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none">
+                      <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-white rounded-[38%] animate-wave" />
+                    </div>
+                    <span className="absolute inset-0 w-full h-full bg-gradient-to-tr from-white/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <Plus size={18} className="relative z-10 transition-transform duration-500 group-hover:rotate-180" />
+                    <span className="relative z-10">Tambah Pegawai Baru</span>
+                    {/* Click Ripple effect */}
+                    <span className="absolute inset-0 rounded-xl bg-white/30 scale-0 transition-transform duration-500 group-active:scale-[2.5] opacity-0 group-active:opacity-100 pointer-events-none" />
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">No</th>
+                        <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">NIP</th>
+                        <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Nama</th>
+                        <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Jabatan</th>
+                        <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Pangkat</th>
+                        <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Rekening</th>
+                        <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600 text-center">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loading ? (
+                        <tr>
+                          <td colSpan="7" className="px-4 py-10 text-center text-gray-500 italic border-b">
+                            Memuat data pegawai...
+                          </td>
+                        </tr>
+                      ) : pegawaiList.length === 0 ? (
+                        <tr>
+                          <td colSpan="7" className="px-4 py-10 text-center text-gray-500 italic border-b">
+                            Belum ada data pegawai. Silahkan tambah data baru.
+                          </td>
+                        </tr>
+                      ) : (
+                        paginatedData.map((item, index) => (
+                          <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-4 py-3 border-b text-sm text-gray-700">{startIndex + index + 1}</td>
+                            <td className="px-4 py-3 border-b text-sm text-gray-700">{item.nip}</td>
+                            <td className="px-4 py-3 border-b text-sm text-gray-700">{item.nama}</td>
+                            <td className="px-4 py-3 border-b text-sm text-gray-700">{item.jabatan}</td>
+                            <td className="px-4 py-3 border-b text-sm text-gray-700">{item.pangkat}</td>
+                            <td className="px-4 py-3 border-b text-sm text-gray-700">{item.rek}</td>
+                            <td className="px-4 py-3 border-b text-sm text-center">
+                              <div className="flex items-center justify-center gap-2">
+                                <button
+                                  onClick={() => {
+                                    setSelectedPegawai(item);
+                                    setIsModalOpen(true);
+                                  }}
+                                  className="inline-flex items-center justify-center rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-700 transition"
+                                  title="Edit"
+                                >
+                                  <Edit size={16} />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(item.id, "pegawai")}
+                                  className="inline-flex items-center justify-center rounded-lg bg-red-500 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 transition"
+                                  title="Hapus"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Controls - Pushed to bottom */}
+                {currentList.length > itemsPerPage && (
+                  <div className="flex justify-center items-center gap-2 mt-auto pt-8">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="px-3 py-2 rounded border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Sebelumnya
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`px-3 py-2 rounded text-sm font-medium ${currentPage === page
+                          ? 'bg-blue-600 text-white'
+                          : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                          }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-2 rounded border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Selanjutnya
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {activeTab === "perjadin-umum-dalam-kota" && (
-              <div className="bg-white p-6 rounded shadow text-gray-800">
-                <div className="flex justify-between items-center mb-6 border-b pb-4">
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-gray-800 flex-1 flex flex-col min-h-[calc(100vh-180px)]">
+                <div className="flex justify-between items-center mb-6 border-b border-gray-50 pb-4">
                   <h2 className="text-xl font-bold text-gray-900">List Data Perjadin Umum Dalam Kota</h2>
                   <button
                     onClick={() => router.push("/dashbord/dashuser/Perjadin/create")}
-                    className="bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-blue-700 transition shadow-sm font-medium"
+                    className="relative group overflow-hidden inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 bg-gradient-to-br from-blue-600/90 to-blue-700/90 backdrop-blur-lg border border-white/20 shadow-lg shadow-blue-500/30 text-white hover:shadow-blue-500/50 hover:scale-[1.02] active:scale-95 active:shadow-inner"
                   >
-                    <span className="text-lg">+</span> Tambah Perjadin Baru
+                    {/* Water wave effect on hover */}
+                    <div className="absolute inset-0 overflow-hidden opacity-0 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none">
+                      <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-white rounded-[38%] animate-wave" />
+                    </div>
+                    <span className="absolute inset-0 w-full h-full bg-gradient-to-tr from-white/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <Plus size={18} className="relative z-10 transition-transform duration-500 group-hover:rotate-180" />
+                    <span className="relative z-10">Tambah Perjadin Baru</span>
+                    {/* Click Ripple effect */}
+                    <span className="absolute inset-0 rounded-xl bg-white/30 scale-0 transition-transform duration-500 group-active:scale-[2.5] opacity-0 group-active:opacity-100 pointer-events-none" />
                   </button>
                 </div>
 
@@ -266,7 +497,7 @@ export default function DashuserPage() {
                                 {(!item.status || item.status === 'Menunggu') ? (
                                   <button
                                     onClick={() => router.push(`/dashbord/dashuser/Perjadin/edit/${item.id}`)}
-                                    className="text-blue-600 hover:text-blue-800 p-1"
+                                    className="inline-flex items-center justify-center rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-700 transition"
                                     title="Edit"
                                   >
                                     <Edit size={16} />
@@ -282,7 +513,7 @@ export default function DashuserPage() {
                                       e.stopPropagation();
                                       setPrintModalItem(item);
                                     }}
-                                    className="text-green-600 hover:text-green-800 p-1 transition-colors"
+                                    className="inline-flex items-center justify-center rounded-lg bg-green-500 px-3 py-2 text-xs font-semibold text-white hover:bg-green-700 transition"
                                     title="Print"
                                   >
                                     <Printer size={16} />
@@ -290,7 +521,7 @@ export default function DashuserPage() {
                                 </div>
                                 <button
                                   onClick={() => handleDelete(item.id)}
-                                  className="text-red-600 hover:text-red-800 p-1"
+                                  className="inline-flex items-center justify-center rounded-lg bg-red-500 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 transition"
                                   title="Hapus"
                                 >
                                   <Trash2 size={16} />
@@ -345,9 +576,9 @@ export default function DashuserPage() {
                   </div>
                 )}
 
-                {/* Pagination Controls */}
+                {/* Pagination Controls - Pushed to bottom */}
                 {perjadinList.length > itemsPerPage && (
-                  <div className="flex justify-center items-center gap-2 mt-6">
+                  <div className="flex justify-center items-center gap-2 mt-auto pt-8">
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
@@ -381,6 +612,17 @@ export default function DashuserPage() {
           </div>
         </main>
       </div>
+
+      <PegawaiModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedPegawai(null);
+        }}
+        onSave={handleSavePegawai}
+        pegawaiData={selectedPegawai}
+        isSaving={isSaving}
+      />
     </div>
   );
 }

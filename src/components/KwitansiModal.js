@@ -12,7 +12,8 @@ export default function KwitansiModal({
   onSubmit, 
   isSubmitting, 
   editingData,
-  isAdmin = false
+  isAdmin = false,
+  onDeleteAccountOption
 }) {
   if (!isOpen) return null;
 
@@ -56,6 +57,7 @@ export default function KwitansiModal({
             editingData={editingData}
             onCancel={onClose}
             isAdmin={isAdmin}
+            onDeleteAccountOption={onDeleteAccountOption}
           />
         </div>
 

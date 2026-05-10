@@ -27,7 +27,7 @@ export default function DashadminPage() {
     const [pegawaiList, setPegawaiList] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5;
+    const itemsPerPage = 10;
     const [printModalItem, setPrintModalItem] = useState(null);
 
     // Modal State for Pegawai
@@ -255,9 +255,9 @@ export default function DashadminPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 flex">
-            {/* Sidebar */}
-            <aside className="w-64 bg-white shadow h-screen p-4 text-gray-800 flex flex-col">
+    <div className="min-h-screen bg-gray-100 flex">
+        {/* Sidebar - Sticky for fixed height alignment */}
+        <aside className="w-64 bg-white shadow-lg h-screen sticky top-0 p-4 text-gray-800 flex flex-col shrink-0">
                 <div className="mb-6 flex items-center gap-3">
                     <div className="w-10 h-10 bg-blue-600 rounded-full" />
                     <div>
@@ -289,13 +289,6 @@ export default function DashadminPage() {
                     </button>
 
                     <button
-                        onClick={() => setActiveTab("update-log")}
-                        className={`w-full text-left flex items-center gap-3 p-2 rounded hover:bg-gray-100 ${activeTab === 'update-log' ? 'bg-gray-100 font-semibold' : 'text-gray-800'}`}
-                    >
-                        Update Log
-                    </button>
-
-                    <button
                         onClick={() => setActiveTab("perjadin-umum-dalam-kota")}
                         className={`w-full text-left flex items-center gap-3 p-2 rounded hover:bg-gray-100 ${activeTab === 'perjadin-umum-dalam-kota' ? 'bg-gray-100 font-semibold' : 'text-gray-800'}`}
                     >
@@ -323,19 +316,26 @@ export default function DashadminPage() {
                 </nav>
 
                 <div className="mt-auto pt-6 border-t border-gray-100 -mx-4 px-4">
+
+                    <button
+                        onClick={() => setActiveTab("update-log")}
+                        className={`w-full text-left flex items-center gap-3 p-2 rounded hover:bg-gray-100 text-sm ${activeTab === 'update-log' ? 'bg-gray-100 font-semibold' : 'text-gray-800'}`}
+                    >
+                        Update Log
+                    </button>
                     <a className="block w-full text-left flex items-center gap-3 p-2 rounded hover:bg-gray-100 text-sm text-gray-700">Settings</a>
                     <a className="block w-full text-left flex items-center gap-3 p-2 rounded hover:bg-gray-100 text-sm text-gray-700">Help & Support</a>
                 </div>
             </aside>
 
             {/* Main area */}
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col min-h-screen relative">
                 {/* Topbar */}
                 <Topbar user={user} role="Admin" />
 
-                {/* Content */}
-                <main className="p-6">
-                    <div className="max-w-7xl mx-auto">
+                {/* Content - Ensure it takes remaining height */}
+                <main className="flex-1 p-6 flex flex-col">
+                    <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col">
                         {activeTab === "overview" && (
                             <div className="col-span-1">
                                 <div className="p-9 bg-white rounded shadow h-20 flex items-center justify-center text-gray-800">
@@ -350,9 +350,10 @@ export default function DashadminPage() {
                         {/* Content for "Update Log" */}
                         {activeTab === "update-log" && <UpdateLogSection />}
 
+                        {/* Content for "Pegawai" */}
                         {activeTab === "pegawai" && (
-                            <div className="bg-white p-6 rounded shadow text-gray-800">
-                                <div className="flex justify-between items-center mb-6 border-b pb-4">
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-gray-800 flex-1 flex flex-col min-h-[calc(100vh-180px)]">
+                                <div className="flex justify-between items-center mb-6 border-b border-gray-50 pb-4">
                                     <h2 className="text-xl font-bold text-gray-900">List Data Pegawai</h2>
                                     <button
                                         onClick={() => {
@@ -407,14 +408,14 @@ export default function DashadminPage() {
                                                                         setSelectedPegawai(item);
                                                                         setIsModalOpen(true);
                                                                     }}
-                                                                    className="text-blue-600 hover:text-blue-800 p-1"
+                                                                    className="inline-flex items-center justify-center rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-700 transition"
                                                                     title="Edit"
                                                                 >
                                                                     <Edit size={16} />
                                                                 </button>
                                                                 <button
                                                                     onClick={() => handleDelete(item.id, "pegawai")}
-                                                                    className="text-red-600 hover:text-red-800 p-1"
+                                                                    className="inline-flex items-center justify-center rounded-lg bg-red-500 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 transition"
                                                                     title="Hapus"
                                                                 >
                                                                     <Trash2 size={16} />
@@ -428,9 +429,9 @@ export default function DashadminPage() {
                                     </table>
                                 </div>
 
-                                {/* Pagination Controls */}
+                                {/* Pagination Controls - Pushed to bottom */}
                                 {currentList.length > itemsPerPage && (
-                                    <div className="flex justify-center items-center gap-2 mt-6">
+                                    <div className="flex justify-center items-center gap-2 mt-auto pt-8">
                                         <button
                                             onClick={() => handlePageChange(currentPage - 1)}
                                             disabled={currentPage === 1}
@@ -466,8 +467,8 @@ export default function DashadminPage() {
 
                         {/* Content for "Perjadin Umum Dalam Kota" */}
                         {activeTab === "perjadin-umum-dalam-kota" && (
-                            <div className="bg-white p-6 rounded shadow text-gray-800">
-                                <div className="flex justify-between items-center mb-6 border-b pb-4">
+                            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-gray-800 flex-1 flex flex-col min-h-[calc(100vh-180px)]">
+                                <div className="flex justify-between items-center mb-6 border-b border-gray-50 pb-4">
                                     <h2 className="text-xl font-bold text-gray-900">List Data Perjadin Umum Dalam Kota</h2>
                                     <button
                                         onClick={() => router.push("/dashbord/dashuser/Perjadin/create")}
@@ -532,7 +533,7 @@ export default function DashadminPage() {
                                                                 {(!item.status || item.status === 'Menunggu') ? (
                                                                     <button
                                                                         onClick={() => router.push(`/dashbord/dashuser/Perjadin/edit/${item.id}`)}
-                                                                        className="text-blue-600 hover:text-blue-800 p-1"
+                                                                        className="inline-flex items-center justify-center rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-700 transition"
                                                                         title="Edit"
                                                                     >
                                                                         <Edit size={16} />
@@ -548,7 +549,7 @@ export default function DashadminPage() {
                                                                             e.stopPropagation();
                                                                             setPrintModalItem(item);
                                                                         }}
-                                                                        className="text-green-600 hover:text-green-800 p-1 transition-colors"
+                                                                        className="inline-flex items-center justify-center rounded-lg bg-green-500 px-3 py-2 text-xs font-semibold text-white hover:bg-green-700 transition"
                                                                         title="Print"
                                                                     >
                                                                         <Printer size={16} />
@@ -556,7 +557,7 @@ export default function DashadminPage() {
                                                                 </div>
                                                                 <button
                                                                     onClick={() => handleDelete(item.id)}
-                                                                    className="text-red-600 hover:text-red-800 p-1"
+                                                                    className="inline-flex items-center justify-center rounded-lg bg-red-500 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 transition"
                                                                     title="Hapus"
                                                                 >
                                                                     <Trash2 size={16} />
@@ -570,9 +571,9 @@ export default function DashadminPage() {
                                     </table>
                                 </div>
 
-                                {/* Pagination Controls */}
+                                {/* Pagination Controls - Pushed to bottom */}
                                 {currentList.length > itemsPerPage && (
-                                    <div className="flex justify-center items-center gap-2 mt-6">
+                                    <div className="flex justify-center items-center gap-2 mt-auto pt-8">
                                         <button
                                             onClick={() => handlePageChange(currentPage - 1)}
                                             disabled={currentPage === 1}

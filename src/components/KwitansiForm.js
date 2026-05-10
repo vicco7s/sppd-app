@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { 
   Briefcase, 
   User, 
@@ -12,7 +12,9 @@ import {
   Plus,
   X,
   Landmark,
-  PenBox
+  PenBox,
+  Search,
+  Trash2
 } from "lucide-react";
 
 const initialFormData = {
@@ -31,6 +33,16 @@ const initialFormData = {
   keperluan: "", // Add keperluan
 };
 
+const BANK_OPTIONS = [
+  "BANK KALSEL",
+  "BANK KALSEL SYARIAH",
+  "BANK BRI",
+  "BANK BNI",
+  "BANK MANDIRI",
+  "BANK BCA",
+  "BANK TABUNGAN NEGARA (BTN)",
+];
+
 export default function KwitansiForm({
   pegawaiList,
   kodeRekeningOptions,
@@ -38,10 +50,59 @@ export default function KwitansiForm({
   isSubmitting,
   editingData = null,
   onCancel,
-  isAdmin = false
+  isAdmin = false,
+  onDeleteAccountOption
 }) {
   const [formData, setFormData] = useState(initialFormData);
   const [customAccount, setCustomAccount] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTermAccount, setSearchTermAccount] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [isOpenAccount, setIsOpenAccount] = useState(false);
+  const [isOpenBank, setIsOpenBank] = useState(false);
+  const [searchTermBank, setSearchTermBank] = useState("");
+  const dropdownRef = useRef(null);
+  const dropdownRefAccount = useRef(null);
+  const dropdownRefBank = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+      if (dropdownRefAccount.current && !dropdownRefAccount.current.contains(event.target)) {
+        setIsOpenAccount(false);
+      }
+      if (dropdownRefBank.current && !dropdownRefBank.current.contains(event.target)) {
+        setIsOpenBank(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredPegawai = pegawaiList.filter((pegawai) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      pegawai.nama?.toLowerCase().includes(searchLower) ||
+      pegawai.rek?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  const filteredAccount = kodeRekeningOptions.filter((option) => {
+    const searchLower = searchTermAccount.toLowerCase();
+    const kode = option.kodeRekening?.toLowerCase() || "";
+    const nama = (option.namaRekeningBelanja || option.nama || option.name || "").toLowerCase();
+    return kode.includes(searchLower) || nama.includes(searchLower);
+  });
+
+  const filteredBanks = BANK_OPTIONS.filter((bank) =>
+    bank.toLowerCase().includes(searchTermBank.toLowerCase())
+  );
+
+  const selectedPegawai = pegawaiList.find((p) => p.id === formData.pegawaiId);
+  const selectedAccount = kodeRekeningOptions.find((o) => o.id === formData.accountOptionId);
 
   useEffect(() => {
     if (editingData) {
@@ -145,57 +206,105 @@ export default function KwitansiForm({
             <div className="flex flex-col space-y-1.5">
               <div className="flex items-center justify-between px-1">
                 <span className="text-[10px] font-bold text-gray-400 uppercase">Pilih Kode Rekening</span>
-                {isAdmin && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCustomAccount((prev) => !prev);
-                      if (!customAccount) {
-                        setFormData((prev) => ({
-                          ...prev,
-                          accountOptionId: "",
-                          program: "",
-                          kegiatan: "",
-                          subKegiatan: "",
-                          kodeRekening: "",
-                          namaRekeningBelanja: "",
-                        }));
-                      }
-                    }}
-                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all border ${
-                      customAccount 
-                        ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20" 
-                        : "bg-white text-gray-500 border-gray-200 hover:border-blue-400 hover:text-blue-600"
-                    }`}
-                  >
-                    {customAccount ? <X size={12} /> : <Plus size={12} />}
-                    {customAccount ? "Batal Manual" : "Input Manual"}
-                  </button>
-                )}
-              </div>
-              <div className="relative group">
-                <select
-                  name="accountOptionId"
-                  value={formData.accountOptionId}
-                  onChange={handleAccountChange}
-                  disabled={customAccount}
-                  className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 group-hover:border-gray-300 disabled:bg-gray-50 disabled:text-gray-400"
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCustomAccount((prev) => !prev);
+                    if (!customAccount) {
+                      setFormData((prev) => ({
+                        ...prev,
+                        accountOptionId: "",
+                        program: "",
+                        kegiatan: "",
+                        subKegiatan: "",
+                        kodeRekening: "",
+                        namaRekeningBelanja: "",
+                      }));
+                    }
+                  }}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all border ${
+                    customAccount 
+                      ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/20" 
+                      : "bg-white text-gray-500 border-gray-200 hover:border-blue-400 hover:text-blue-600"
+                  }`}
                 >
-                  <option value="">-- Pilih kode rekening belanja --</option>
-                  {kodeRekeningOptions.map((option) => {
-                    const label = option.kodeRekening
-                      ? `${option.kodeRekening} - ${option.namaRekeningBelanja || option.nama || option.name || ""}`
-                      : option.nama || option.name || option.value || "Data rekening";
-                    return (
-                      <option key={option.id} value={option.id}>
-                        {label}
-                      </option>
-                    );
-                  })}
-                </select>
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 group-hover:text-gray-600 transition-colors">
-                  <ChevronRight size={16} className="rotate-90" />
-                </div>
+                  {customAccount ? <X size={12} /> : <Plus size={12} />}
+                  {customAccount ? "Batal Manual" : "Input Manual"}
+                </button>
+              </div>
+              <div className="relative" ref={dropdownRefAccount}>
+                <button
+                  type="button"
+                  disabled={customAccount}
+                  onClick={() => setIsOpenAccount(!isOpenAccount)}
+                  className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 hover:border-gray-300 disabled:bg-gray-50 disabled:text-gray-400"
+                >
+                  <span className={`truncate mr-2 ${!selectedAccount ? "text-gray-400" : ""}`}>
+                    {selectedAccount 
+                      ? (selectedAccount.kodeRekening 
+                        ? `${selectedAccount.kodeRekening} - ${selectedAccount.namaRekeningBelanja || selectedAccount.nama || ""}`
+                        : selectedAccount.nama || selectedAccount.namaRekeningBelanja || "")
+                      : "-- Pilih kode rekening belanja --"}
+                  </span>
+                  <ChevronRight size={16} className={`text-gray-400 shrink-0 transition-transform duration-200 ${isOpenAccount ? "-rotate-90" : "rotate-90"}`} />
+                </button>
+
+                {isOpenAccount && !customAccount && (
+                  <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                    <div className="sticky top-0 border-b border-gray-50 bg-gray-50/50 p-2 backdrop-blur-sm">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                        <input
+                          type="text"
+                          placeholder="Cari kode atau nama rekening..."
+                          value={searchTermAccount}
+                          onChange={(e) => setSearchTermAccount(e.target.value)}
+                          className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-4 text-xs outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5"
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+                    <div className="max-h-60 overflow-y-auto p-1 custom-scrollbar">
+                      {filteredAccount.length > 0 ? (
+                        filteredAccount.map((option) => (
+                          <div key={option.id} className="group/item flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleAccountChange({ target: { value: option.id } });
+                                setIsOpenAccount(false);
+                                setSearchTermAccount("");
+                              }}
+                              className={`flex-1 flex flex-col items-start rounded-lg px-3 py-2 text-left transition-colors hover:bg-blue-50/50 ${
+                                formData.accountOptionId === option.id ? "bg-blue-50 text-blue-700" : "text-gray-700"
+                              }`}
+                            >
+                              <span className="text-xs font-bold">{option.kodeRekening || "N/A"}</span>
+                              <span className="text-[10px] text-gray-500 line-clamp-1">
+                                {option.namaRekeningBelanja || option.nama || option.name || "Tanpa Nama"}
+                              </span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDeleteAccountOption(option.id);
+                              }}
+                              className="opacity-0 group-hover/item:opacity-100 p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all mr-1"
+                              title="Hapus Referensi"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-4 py-8 text-center">
+                          <p className="text-xs font-medium text-gray-400">Kode rekening tidak ditemukan</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
               {kodeRekeningOptions.length === 0 && !customAccount && (
                 <div className="flex items-center gap-1.5 px-1 pt-1">
@@ -279,23 +388,64 @@ export default function KwitansiForm({
             <div className="space-y-3">
               <label className="block space-y-1">
                 <span className="text-[10px] font-bold text-gray-400 uppercase ml-1">Pilih Rekening Pegawai</span>
-                <div className="relative group">
-                  <select
-                    name="pegawaiId"
-                    value={formData.pegawaiId}
-                    onChange={handlePegawaiChange}
-                    className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 group-hover:border-gray-300"
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 hover:border-gray-300"
                   >
-                    <option value="">-- Pilih pegawai --</option>
-                    {pegawaiList.map((pegawai) => (
-                      <option key={pegawai.id} value={pegawai.id}>
-                        {pegawai.nama} {pegawai.rek ? `(${pegawai.rek})` : ""}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                    <ChevronRight size={16} className="rotate-90" />
-                  </div>
+                    <span className={!selectedPegawai ? "text-gray-400" : ""}>
+                      {selectedPegawai 
+                        ? `${selectedPegawai.nama} ${selectedPegawai.rek ? `(${selectedPegawai.rek})` : ""}` 
+                        : "-- Pilih pegawai --"}
+                    </span>
+                    <ChevronRight size={16} className={`text-gray-400 transition-transform duration-200 ${isOpen ? "-rotate-90" : "rotate-90"}`} />
+                  </button>
+
+                  {isOpen && (
+                    <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                      <div className="sticky top-0 border-b border-gray-50 bg-gray-50/50 p-2 backdrop-blur-sm">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                          <input
+                            type="text"
+                            placeholder="Cari nama atau rekening..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-4 text-xs outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5"
+                            autoFocus
+                          />
+                        </div>
+                      </div>
+                      <div className="max-h-60 overflow-y-auto p-1 custom-scrollbar">
+                        {filteredPegawai.length > 0 ? (
+                          filteredPegawai.map((pegawai) => (
+                            <button
+                              key={pegawai.id}
+                              type="button"
+                              onClick={() => {
+                                handlePegawaiChange({ target: { value: pegawai.id } });
+                                setIsOpen(false);
+                                setSearchTerm("");
+                              }}
+                              className={`flex w-full flex-col items-start rounded-lg px-3 py-2 text-left transition-colors hover:bg-indigo-50/50 ${
+                                formData.pegawaiId === pegawai.id ? "bg-indigo-50 text-indigo-700" : "text-gray-700"
+                              }`}
+                            >
+                              <span className="text-sm font-semibold">{pegawai.nama}</span>
+                              {pegawai.rek && (
+                                <span className="text-[10px] text-gray-400">{pegawai.rek} {pegawai.bank ? `• ${pegawai.bank}` : ""}</span>
+                              )}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-8 text-center">
+                            <p className="text-xs font-medium text-gray-400">Pegawai tidak ditemukan</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </label>
             </div>
@@ -350,28 +500,74 @@ export default function KwitansiForm({
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <label className="block space-y-1">
               <span className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nama Bank</span>
-              <div className="relative group">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-violet-500 transition-colors">
-                  <Landmark size={14} />
-                </div>
-                <input
-                  name="namaBank"
-                  list="bank-list"
-                  value={formData.namaBank}
-                  onChange={handleChange}
-                  placeholder="Pilih atau ketik bank..."
-                  className="w-full rounded-xl border border-gray-200 bg-white pl-10 pr-4 py-2.5 text-sm text-gray-900 outline-none transition-all focus:border-violet-500 focus:ring-4 focus:ring-violet-500/5 group-hover:border-gray-300"
-                />
+              <div className="relative" ref={dropdownRefBank}>
+                <button
+                  type="button"
+                  onClick={() => setIsOpenBank(!isOpenBank)}
+                  className="flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition-all focus:border-violet-500 focus:ring-4 focus:ring-violet-500/5 hover:border-gray-300"
+                >
+                  <div className={`shrink-0 ${formData.namaBank ? "text-violet-500" : "text-gray-400"}`}>
+                    <Landmark size={14} />
+                  </div>
+                  <span className={`flex-1 text-left truncate ${!formData.namaBank ? "text-gray-400" : ""}`}>
+                    {formData.namaBank || "Pilih atau cari bank..."}
+                  </span>
+                  <ChevronRight size={16} className={`text-gray-400 transition-transform duration-200 ${isOpenBank ? "-rotate-90" : "rotate-90"}`} />
+                </button>
+
+                {isOpenBank && (
+                  <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                    <div className="sticky top-0 border-b border-gray-50 bg-gray-50/50 p-2 backdrop-blur-sm">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                        <input
+                          type="text"
+                          placeholder="Cari nama bank..."
+                          value={searchTermBank}
+                          onChange={(e) => setSearchTermBank(e.target.value)}
+                          className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-4 text-xs outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/5"
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+                    <div className="max-h-52 overflow-y-auto p-1 custom-scrollbar">
+                      {filteredBanks.length > 0 ? (
+                        filteredBanks.map((bank) => (
+                          <button
+                            key={bank}
+                            type="button"
+                            onClick={() => {
+                              handleChange({ target: { name: "namaBank", value: bank } });
+                              setIsOpenBank(false);
+                              setSearchTermBank("");
+                            }}
+                            className={`flex w-full items-center rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-violet-50/50 ${
+                              formData.namaBank === bank ? "bg-violet-50 text-violet-700 font-semibold" : "text-gray-700"
+                            }`}
+                          >
+                            {bank}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-4 py-6 text-center">
+                          <p className="text-xs font-medium text-gray-400">Bank tidak ditemukan</p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleChange({ target: { name: "namaBank", value: searchTermBank.toUpperCase() } });
+                              setIsOpenBank(false);
+                              setSearchTermBank("");
+                            }}
+                            className="mt-2 text-[10px] font-bold text-violet-600 hover:underline"
+                          >
+                            Gunakan "{searchTermBank}"
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-              <datalist id="bank-list">
-                <option value="BANK KALSEL" />
-                <option value="BANK KALSEL SYARIAH" />
-                <option value="BANK BRI" />
-                <option value="BANK BNI" />
-                <option value="BANK MANDIRI" />
-                <option value="BANK BCA" />
-                <option value="BANK TABUNGAN NEGARA (BTN)" />
-              </datalist>
             </label>
             <label className="block space-y-1.5">
               <span className="text-xs font-bold text-gray-500 uppercase ml-1">Nominal (Rp)</span>

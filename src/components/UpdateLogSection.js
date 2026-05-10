@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { collection, addDoc, getDocs, query, orderBy, serverTimestamp, deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/services/firebases";
 import { toast } from "react-hot-toast";
-import { Plus, Trash2, Save, X, Info, Zap, Bell, Sparkles, PrinterCheck, Database, CloverIcon, PartyPopperIcon, Flame, Bot, Send, Calendar, Pen, Paperclip, PrinterIcon, CloudSyncIcon } from "lucide-react";
+import { Plus, Trash2, Save, X, Info, Zap, Bell, Sparkles, PrinterCheck, Database, CloverIcon, PartyPopperIcon, Flame, Bot, Send, Calendar, Pen, Paperclip, PrinterIcon, CloudSyncIcon, FlagTriangleLeft, History } from "lucide-react";
 
 const ICON_OPTIONS = [
     { name: "Zap", icon: <Zap size={16} /> },
@@ -22,6 +22,8 @@ const ICON_OPTIONS = [
     { name: "Paperclip", icon: <Paperclip size={16} /> },
     { name: "PrinterIcon", icon: <PrinterIcon size={16} /> },
     { name: "CloudSyncIcon", icon: <CloudSyncIcon size={16} /> },
+    { name: "FlagTriangleLeft", icon: <FlagTriangleLeft size={16} /> },
+    { name: "History", icon: <History size={16} /> },
 ];
 
 export default function UpdateLogSection() {

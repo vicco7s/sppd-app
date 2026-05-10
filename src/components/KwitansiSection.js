@@ -197,6 +197,21 @@ export default function KwitansiSection({ isAdmin = false }) {
     }
   };
 
+  const handleDeleteAccountOption = async (id) => {
+    if (!window.confirm("Apakah Anda yakin ingin menghapus kode rekening ini dari referensi?")) {
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, "koderekening", id));
+      setKodeRekeningOptions((prev) => prev.filter((item) => item.id !== id));
+      toast.success("Kode rekening dihapus dari referensi.");
+    } catch (error) {
+      console.error("Error deleting account option:", error);
+      toast.error("Gagal menghapus kode rekening.");
+    }
+  };
+
   const handleEditKwitansi = (kwitansi) => {
     setEditingKwitansi(kwitansi);
     setShowForm(true);
@@ -209,11 +224,11 @@ export default function KwitansiSection({ isAdmin = false }) {
 
 
   return (
-    <div className="bg-white p-6 rounded shadow text-gray-800">
-      <div className="mb-6">
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-gray-800 flex-1 flex flex-col min-h-[calc(100vh-180px)]">
+      {/* <div className="mb-6">
         <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">Manajemen Kwitansi</h2>
         <p className="text-sm text-gray-500 mt-1">Kelola seluruh data kwitansi pengeluaran perjalanan dinas secara terpusat.</p>
-      </div>
+      </div> */}
 
       <KwitansiModal
         isOpen={showForm}
@@ -224,6 +239,7 @@ export default function KwitansiSection({ isAdmin = false }) {
         isSubmitting={isSaving}
         editingData={editingKwitansi}
         isAdmin={isAdmin}
+        onDeleteAccountOption={handleDeleteAccountOption}
       />
 
       <div>
