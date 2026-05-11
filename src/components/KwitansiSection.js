@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import KwitansiModal from "@/components/KwitansiModal";
 import KwitansiTable from "@/components/KwitansiTable";
 
-export default function KwitansiSection({ isAdmin = false }) {
+export default function KwitansiSection({ isAdmin = false, userProfile = null }) {
   const [kwitansiList, setKwitansiList] = useState([]);
   const [pegawaiList, setPegawaiList] = useState([]);
   const [kodeRekeningOptions, setKodeRekeningOptions] = useState([]);
@@ -145,12 +145,11 @@ export default function KwitansiSection({ isAdmin = false }) {
             ? `Kwitansi senilai Rp ${payload.nominal.toLocaleString('id-ID')} telah diperbarui.`
             : `Kwitansi baru senilai Rp ${payload.nominal.toLocaleString('id-ID')} telah dibuat untuk ${payload.namaRekening}.`,
           type: isEdit ? "update" : "perjadin",
-          userName: auth.currentUser?.displayName || "User",
+          userName: isAdmin ? (auth.currentUser?.email || "Admin") : (userProfile?.name || auth.currentUser?.displayName || "User"),
           userEmail: auth.currentUser?.email || "-",
           userUid: auth.currentUser?.uid || "system",
           createdAt: serverTimestamp(),
-          readBy: [],
-          read: false
+          isRead: false
         });
       } catch (notifError) {
         console.error("Failed to create kwitansi notification:", notifError);

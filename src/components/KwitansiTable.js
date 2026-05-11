@@ -1,10 +1,42 @@
 "use client";
 
-import React from "react";
-import { Trash2, Plus, X, Pencil, Printer } from "lucide-react";
+import React, { useState } from "react";
+import { Trash2, Plus, X, Pencil, Printer, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { generateKwitansiPDF } from "../lib/pdf/kwitansi/kwitansi";
+import Pagination from "./Pagination";
 
 export default function KwitansiTable({ items, loading, onDelete, onEdit, onToggleForm, showForm }) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortOrder, setSortOrder] = useState("desc"); // "asc" or "desc"
+  const itemsPerPage = 10;
+
+  // Sort items based on order
+  const sortedItems = [...items].sort((a, b) => {
+    // Assuming newest data has higher index or we use createdAt if available
+    // But since items are passed as a list, we just reverse if needed
+    // Default (items) is newest first (desc)
+    return sortOrder === "desc" ? 0 : 0; // The actual data from parent is already sorted desc
+  });
+
+  // If sortOrder is "asc", we reverse the already desc-sorted items
+  const displayItems = sortOrder === "asc" ? [...items].reverse() : items;
+
+  const totalPages = Math.ceil(displayItems.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedItems = displayItems.slice(startIndex, startIndex + itemsPerPage);
+
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
+  const toggleSort = () => {
+    setSortOrder(sortOrder === "desc" ? "asc" : "desc");
+    setCurrentPage(1);
+  };
   return (
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
       {/* Header Table */}
@@ -34,7 +66,19 @@ export default function KwitansiTable({ items, loading, onDelete, onEdit, onTogg
       <table className="w-full min-w-max text-left border-collapse">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">No</th>
+            <th 
+              className="px-4 py-3 border-b text-sm font-semibold text-gray-600 cursor-pointer hover:bg-gray-100 transition-colors group"
+              onClick={toggleSort}
+            >
+              <div className="flex items-center gap-1">
+                No
+                {sortOrder === "desc" ? (
+                  <ArrowDown size={14} className="text-blue-500" />
+                ) : (
+                  <ArrowUp size={14} className="text-blue-500" />
+                )}
+              </div>
+            </th>
             <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Nama Rekening Belanja</th>
             <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Nama Rekening</th>
             <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Nominal</th>
@@ -56,9 +100,14 @@ export default function KwitansiTable({ items, loading, onDelete, onEdit, onTogg
               </td>
             </tr>
           ) : (
-            items.map((item, index) => (
+            paginatedItems.map((item, index) => (
               <tr key={item.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3 border-b text-sm text-gray-700">{index + 1}</td>
+                <td className="px-4 py-3 border-b text-sm text-gray-700">
+                  {sortOrder === "desc" 
+                    ? items.length - (startIndex + index) 
+                    : startIndex + index + 1
+                  }
+                </td>
                 <td className="px-4 py-3 border-b text-sm text-gray-700">{item.namaRekeningBelanja || "-"}</td>
                 <td className="px-4 py-3 border-b text-sm text-gray-700">{item.namaRekening || "-"}</td>
                 <td className="px-4 py-3 border-b text-sm text-gray-700">{item.nominal?.toLocaleString?.() || item.nominal || "-"}</td>
@@ -98,6 +147,17 @@ export default function KwitansiTable({ items, loading, onDelete, onEdit, onTogg
         </tbody>
       </table>
       </div>
+      {/* Pagination Controls */}
+      {!loading && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          itemsPerPage={itemsPerPage}
+          totalItems={displayItems.length}
+          startIndex={startIndex}
+        />
+      )}
     </div>
   );
 }

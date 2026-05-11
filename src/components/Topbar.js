@@ -206,18 +206,18 @@ export default function Topbar({ user, role = "User" }) {
                                                 </div>
                                                 <div className="flex-1">
                                                     <p className={`text-xs leading-tight mb-1 ${!notif.isRead ? 'font-bold text-gray-900' : 'font-medium text-gray-600'}`}>{notif.title}</p>
-                                                    <p className="text-[11px] text-gray-500 leading-relaxed mb-1.5 line-clamp-2">{notif.message}</p>
-                                                    <div className="flex flex-col gap-0.5 mt-auto">
-                                                        <span className="text-[10px] text-gray-400 font-medium truncate max-w-[180px]">
-                                                            Oleh: {notif.userEmail || notif.userName}
+                                                    <p className="text-[11px] text-gray-500 leading-relaxed mb-2 line-clamp-2">{notif.message}</p>
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="text-[10px] text-gray-400 font-bold">
+                                                            Oleh: {notif.userName || notif.userEmail || "Sistem"}
                                                         </span>
-                                                        <span className="text-[9px] text-gray-400/80">
-                                                            {notif.createdAt?.toDate ? new Intl.DateTimeFormat('id-ID', {
-                                                                day: '2-digit',
-                                                                month: '2-digit',
-                                                                hour: '2-digit',
-                                                                minute: '2-digit'
-                                                            }).format(notif.createdAt.toDate()) : 'Baru saja'}
+                                                        <span className="text-[9px] text-gray-400 font-medium">
+                                                            {notif.createdAt?.toDate ? (() => {
+                                                                const d = notif.createdAt.toDate();
+                                                                const date = d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit' });
+                                                                const time = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(':', '.');
+                                                                return `${date}, ${time}`;
+                                                            })() : 'Baru saja'}
                                                         </span>
                                                     </div>
                                                 </div>

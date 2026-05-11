@@ -12,6 +12,7 @@ const CreatePerjadin = () => {
   const router = useRouter();
   const [pegawaiList, setPegawaiList] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
 
   // Ambil data pegawai dari Firestore
   useEffect(() => {
@@ -28,6 +29,26 @@ const CreatePerjadin = () => {
       }
     };
     fetchPegawai();
+
+    // Fetch Current User Profile
+    const fetchUserProfile = async () => {
+      const u = auth.currentUser;
+      if (u) {
+        try {
+          const userDoc = await getDoc(doc(db, "user", u.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            if (userData.idPegawai) {
+              const pegDoc = await getDoc(doc(db, "pegawai", userData.idPegawai));
+              if (pegDoc.exists()) {
+                setUserProfile({ ...userData, name: pegDoc.data().nama });
+              }
+            }
+          }
+        } catch (err) { console.error("Error fetching user profile:", err); }
+      }
+    };
+    fetchUserProfile();
   }, []);
 
   const handleSave = async (formData) => {
@@ -73,13 +94,13 @@ const CreatePerjadin = () => {
       try {
         await addDoc(collection(db, "notifications"), {
           title: "Perjadin Baru",
-          message: `Perjadin ke ${formData.tujuan} telah ditambahkan.`,
+          message: `Perjadin ke ${formData.tujuan} telah ditambahkan oleh ${userProfile?.name || auth.currentUser?.displayName || 'User'}.`,
           type: "create",
-          userName: auth.currentUser?.displayName || "User",
+          userName: userProfile?.name || auth.currentUser?.displayName || "User",
           userEmail: auth.currentUser?.email || "-",
           userUid: auth.currentUser?.uid,
           createdAt: serverTimestamp(),
-          read: false
+          isRead: false
         });
       } catch (notifErr) {
         console.error("Failed to create notification:", notifErr);

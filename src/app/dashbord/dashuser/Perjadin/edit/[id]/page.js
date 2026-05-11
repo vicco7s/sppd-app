@@ -17,6 +17,7 @@ const EditPerjadinPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialData, setInitialData] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
 
   // Ambil data pegawai dari Firestore
   useEffect(() => {
@@ -33,6 +34,26 @@ const EditPerjadinPage = () => {
       }
     };
     fetchPegawai();
+
+    // Fetch Current User Profile
+    const fetchUserProfile = async () => {
+      const u = auth.currentUser;
+      if (u) {
+        try {
+          const userDoc = await getDoc(doc(db, "user", u.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            if (userData.idPegawai) {
+              const pegDoc = await getDoc(doc(db, "pegawai", userData.idPegawai));
+              if (pegDoc.exists()) {
+                setUserProfile({ ...userData, name: pegDoc.data().nama });
+              }
+            }
+          }
+        } catch (err) { console.error("Error fetching user profile:", err); }
+      }
+    };
+    fetchUserProfile();
   }, []);
 
   // Ambil data perjadin berdasarkan ID
@@ -118,13 +139,13 @@ const EditPerjadinPage = () => {
       try {
         await addDoc(collection(db, "notifications"), {
           title: "Update Perjadin",
-          message: `Data Perjadin ke ${formData.tujuan} telah diperbarui.`,
+          message: `Data Perjadin ke ${formData.tujuan} telah diperbarui oleh ${userProfile?.name || auth.currentUser?.displayName || 'User'}.`,
           type: "update",
-          userName: auth.currentUser?.displayName || "User",
+          userName: userProfile?.name || auth.currentUser?.displayName || "User",
           userEmail: auth.currentUser?.email || "-",
           userUid: auth.currentUser?.uid,
           createdAt: serverTimestamp(),
-          read: false
+          isRead: false
         });
       } catch (notifErr) {
         console.error("Failed to create update notification:", notifErr);

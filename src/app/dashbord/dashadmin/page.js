@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Bell, ChevronDown, ChevronRight, LogOut, User, Edit, Trash2, Printer } from "lucide-react";
+import { Bell, ChevronDown, ChevronRight, LogOut, User, Edit, Trash2, Printer, ArrowUp, ArrowDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/services/firebases";
 import { signOut, onAuthStateChanged } from "firebase/auth";
@@ -15,6 +15,8 @@ import { useInactivityLogout, clearAuthCache } from "@/hooks/useInactivityLogout
 import Topbar from "@/components/Topbar";
 import KwitansiSection from "@/components/KwitansiSection";
 import UpdateLogSection from "@/components/UpdateLogSection";
+import Pagination from "@/components/Pagination";
+import UserSection from "@/components/UserSection";
 
 export default function DashadminPage() {
     useInactivityLogout(1800000); // 30 minutes auto logout
@@ -27,8 +29,10 @@ export default function DashadminPage() {
     const [pegawaiList, setPegawaiList] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
+    const [sortOrder, setSortOrder] = useState("desc");
     const itemsPerPage = 10;
     const [printModalItem, setPrintModalItem] = useState(null);
+    const [userProfile, setUserProfile] = useState(null);
 
     // Modal State for Pegawai
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,13 +43,27 @@ export default function DashadminPage() {
         const unsubscribeAuth = onAuthStateChanged(auth, async (u) => {
             if (u) {
                 setUser(u);
-                // Verify role
+                // Verify role and fetch full profile
                 try {
                     const userDoc = await getDoc(doc(db, "user", u.uid));
                     if (userDoc.exists()) {
-                        const role = userDoc.data().role;
+                        const userData = userDoc.data();
+                        const role = userData.role;
                         if (role !== "admin") {
                             router.replace("/dashbord/dashuser");
+                            return;
+                        }
+
+                        // Fetch Pegawai Name
+                        if (userData.idPegawai) {
+                            const pegDoc = await getDoc(doc(db, "pegawai", userData.idPegawai));
+                            if (pegDoc.exists()) {
+                                setUserProfile({ ...userData, name: pegDoc.data().nama });
+                            } else {
+                                setUserProfile({ ...userData, name: u.displayName || "Admin" });
+                            }
+                        } else {
+                            setUserProfile({ ...userData, name: u.displayName || "Admin" });
                         }
                     } else {
                         router.replace("/login");
@@ -92,6 +110,12 @@ export default function DashadminPage() {
         };
 
         fetchData();
+    }, [activeTab]);
+
+    // Reset page and sort when tab changes
+    useEffect(() => {
+        setCurrentPage(1);
+        setSortOrder("desc");
     }, [activeTab]);
 
     const handleDelete = async (id, type = "perjadinkota") => {
@@ -155,11 +179,11 @@ export default function DashadminPage() {
                         title: "Update Data Pegawai",
                         message: `Data pegawai ${formData.nama} telah diperbarui.`,
                         type: "update",
-                        userName: auth.currentUser?.displayName || "Admin",
+                        userName: auth.currentUser?.email || "Admin",
                         userEmail: auth.currentUser?.email || "-",
                         userUid: auth.currentUser?.uid,
                         createdAt: serverTimestamp(),
-                        read: false
+                        isRead: false
                     });
                 } catch (notifErr) {
                     console.error("Failed to create pegawai update notification:", notifErr);
@@ -180,11 +204,11 @@ export default function DashadminPage() {
                         title: "Pegawai Baru",
                         message: `Pegawai baru ${formData.nama} telah ditambahkan ke sistem.`,
                         type: "pegawai",
-                        userName: auth.currentUser?.displayName || "Admin",
+                        userName: auth.currentUser?.email || "Admin",
                         userEmail: auth.currentUser?.email || "-",
                         userUid: auth.currentUser?.uid,
                         createdAt: serverTimestamp(),
-                        read: false
+                        isRead: false
                     });
                 } catch (notifErr) {
                     console.error("Failed to create notification:", notifErr);
@@ -221,11 +245,11 @@ export default function DashadminPage() {
                     title: "Status Perjadin Berubah",
                     message: `Status Perjadin ke ${tujuan} diubah menjadi ${newStatus}.`,
                     type: "status",
-                    userName: auth.currentUser?.displayName || "Admin",
+                    userName: auth.currentUser?.email || "Admin",
                     userEmail: auth.currentUser?.email || "-",
                     userUid: auth.currentUser?.uid,
                     createdAt: serverTimestamp(),
-                    read: false
+                    isRead: false
                 });
             } catch (notifErr) {
                 console.error("Failed to create status notification:", notifErr);
@@ -243,12 +267,19 @@ export default function DashadminPage() {
     };
 
 
-    // Pagination logic
+    // Pagination & Sort logic
     const currentList = activeTab === "pegawai" ? pegawaiList : perjadinList;
-    const totalPages = Math.ceil(currentList.length / itemsPerPage);
+    const sortedData = sortOrder === "asc" ? [...currentList].reverse() : currentList;
+    
+    const totalPages = Math.ceil(sortedData.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const paginatedData = currentList.slice(startIndex, endIndex);
+    const paginatedData = sortedData.slice(startIndex, endIndex);
+
+    const toggleSort = () => {
+        setSortOrder(sortOrder === "desc" ? "asc" : "desc");
+        setCurrentPage(1);
+    };
 
     const handlePageChange = (page) => {
         setCurrentPage(page);
@@ -279,6 +310,13 @@ export default function DashadminPage() {
                         className={`w-full text-left flex items-center gap-3 p-2 rounded hover:bg-gray-100 ${activeTab === 'pegawai' ? 'bg-gray-100 font-semibold' : 'text-gray-800'}`}
                     >
                         Pegawai
+                    </button>
+
+                    <button
+                        onClick={() => setActiveTab("manage-users")}
+                        className={`w-full text-left flex items-center gap-3 p-2 rounded hover:bg-gray-100 ${activeTab === 'manage-users' ? 'bg-gray-100 font-semibold' : 'text-gray-800'}`}
+                    >
+                        Kelola User
                     </button>
 
                     <button
@@ -345,10 +383,13 @@ export default function DashadminPage() {
                         )}
 
                         {/* Content for "Kwitansi" */}
-                        {activeTab === "kwitansi" && <KwitansiSection isAdmin={true} />}
+                        {activeTab === "kwitansi" && <KwitansiSection isAdmin={true} userProfile={userProfile} />}
 
                         {/* Content for "Update Log" */}
                         {activeTab === "update-log" && <UpdateLogSection />}
+
+                        {/* Content for "Kelola User" */}
+                        {activeTab === "manage-users" && <UserSection />}
 
                         {/* Content for "Pegawai" */}
                         {activeTab === "pegawai" && (
@@ -370,7 +411,15 @@ export default function DashadminPage() {
                                     <table className="w-full text-left border-collapse">
                                         <thead className="bg-gray-50">
                                             <tr>
-                                                <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">No</th>
+                                                <th 
+                                                    className="px-4 py-3 border-b text-sm font-semibold text-gray-600 cursor-pointer hover:bg-gray-100 transition-colors group"
+                                                    onClick={toggleSort}
+                                                >
+                                                    <div className="flex items-center gap-1">
+                                                        No
+                                                        {sortOrder === "desc" ? <ArrowDown size={14} className="text-blue-500" /> : <ArrowUp size={14} className="text-blue-500" />}
+                                                    </div>
+                                                </th>
                                                 <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">NIP</th>
                                                 <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Nama</th>
                                                 <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Jabatan</th>
@@ -395,7 +444,9 @@ export default function DashadminPage() {
                                             ) : (
                                                 paginatedData.map((item, index) => (
                                                     <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                                                        <td className="px-4 py-3 border-b text-sm text-gray-700">{startIndex + index + 1}</td>
+                                                        <td className="px-4 py-3 border-b text-sm text-gray-700">
+                                                            {sortOrder === "desc" ? currentList.length - (startIndex + index) : startIndex + index + 1}
+                                                        </td>
                                                         <td className="px-4 py-3 border-b text-sm text-gray-700">{item.nip}</td>
                                                         <td className="px-4 py-3 border-b text-sm text-gray-700">{item.nama}</td>
                                                         <td className="px-4 py-3 border-b text-sm text-gray-700">{item.jabatan}</td>
@@ -429,36 +480,16 @@ export default function DashadminPage() {
                                     </table>
                                 </div>
 
-                                {/* Pagination Controls - Pushed to bottom */}
-                                {currentList.length > itemsPerPage && (
-                                    <div className="flex justify-center items-center gap-2 mt-auto pt-8">
-                                        <button
-                                            onClick={() => handlePageChange(currentPage - 1)}
-                                            disabled={currentPage === 1}
-                                            className="px-3 py-2 rounded border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            Sebelumnya
-                                        </button>
-                                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                                            <button
-                                                key={page}
-                                                onClick={() => handlePageChange(page)}
-                                                className={`px-3 py-2 rounded text-sm font-medium ${currentPage === page
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                                                    }`}
-                                            >
-                                                {page}
-                                            </button>
-                                        ))}
-                                        <button
-                                            onClick={() => handlePageChange(currentPage + 1)}
-                                            disabled={currentPage === totalPages}
-                                            className="px-3 py-2 rounded border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            Selanjutnya
-                                        </button>
-                                    </div>
+                                {/* Pagination Controls */}
+                                {!loading && (
+                                    <Pagination
+                                        currentPage={currentPage}
+                                        totalPages={totalPages}
+                                        onPageChange={setCurrentPage}
+                                        itemsPerPage={itemsPerPage}
+                                        totalItems={currentList.length}
+                                        startIndex={startIndex}
+                                    />
                                 )}
                             </div>
                         )}
@@ -482,7 +513,15 @@ export default function DashadminPage() {
                                     <table className="w-full text-left border-collapse">
                                         <thead className="bg-gray-50">
                                             <tr>
-                                                <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">No</th>
+                                                <th 
+                                                    className="px-4 py-3 border-b text-sm font-semibold text-gray-600 cursor-pointer hover:bg-gray-100 transition-colors group"
+                                                    onClick={toggleSort}
+                                                >
+                                                    <div className="flex items-center gap-1">
+                                                        No
+                                                        {sortOrder === "desc" ? <ArrowDown size={14} className="text-blue-500" /> : <ArrowUp size={14} className="text-blue-500" />}
+                                                    </div>
+                                                </th>
                                                 <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">No SPT</th>
                                                 <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Tujuan</th>
                                                 <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Tanggal</th>
@@ -507,7 +546,9 @@ export default function DashadminPage() {
                                             ) : (
                                                 paginatedData.map((item, index) => (
                                                     <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                                                        <td className="px-4 py-3 border-b text-sm text-gray-700">{item.no}</td>
+                                                        <td className="px-4 py-3 border-b text-sm text-gray-700">
+                                                            {sortOrder === "desc" ? currentList.length - (startIndex + index) : startIndex + index + 1}
+                                                        </td>
                                                         <td className="px-4 py-3 border-b text-sm text-gray-700">{item.noSpt}</td>
                                                         <td className="px-4 py-3 border-b text-sm text-gray-700">{item.tujuan}</td>
                                                         <td className="px-4 py-3 border-b text-sm text-gray-700">{item.tanggalBerangkat}</td>
@@ -571,36 +612,16 @@ export default function DashadminPage() {
                                     </table>
                                 </div>
 
-                                {/* Pagination Controls - Pushed to bottom */}
-                                {currentList.length > itemsPerPage && (
-                                    <div className="flex justify-center items-center gap-2 mt-auto pt-8">
-                                        <button
-                                            onClick={() => handlePageChange(currentPage - 1)}
-                                            disabled={currentPage === 1}
-                                            className="px-3 py-2 rounded border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            Sebelumnya
-                                        </button>
-                                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                                            <button
-                                                key={page}
-                                                onClick={() => handlePageChange(page)}
-                                                className={`px-3 py-2 rounded text-sm font-medium ${currentPage === page
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                                                    }`}
-                                            >
-                                                {page}
-                                            </button>
-                                        ))}
-                                        <button
-                                            onClick={() => handlePageChange(currentPage + 1)}
-                                            disabled={currentPage === totalPages}
-                                            className="px-3 py-2 rounded border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            Selanjutnya
-                                        </button>
-                                    </div>
+                                {/* Pagination Controls */}
+                                {!loading && (
+                                    <Pagination
+                                        currentPage={currentPage}
+                                        totalPages={totalPages}
+                                        onPageChange={setCurrentPage}
+                                        itemsPerPage={itemsPerPage}
+                                        totalItems={currentList.length}
+                                        startIndex={startIndex}
+                                    />
                                 )}
                             </div>
                         )}
