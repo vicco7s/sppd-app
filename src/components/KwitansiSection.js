@@ -145,7 +145,7 @@ export default function KwitansiSection({ isAdmin = false, userProfile = null })
             ? `Kwitansi senilai Rp ${payload.nominal.toLocaleString('id-ID')} telah diperbarui.`
             : `Kwitansi baru senilai Rp ${payload.nominal.toLocaleString('id-ID')} telah dibuat untuk ${payload.namaRekening}.`,
           type: isEdit ? "update" : "perjadin",
-          userName: isAdmin ? (auth.currentUser?.email || "Admin") : (userProfile?.name || auth.currentUser?.displayName || "User"),
+          userName: (isAdmin || userProfile?.role === 'admin') ? (auth.currentUser?.email || "Admin") : (userProfile?.name || auth.currentUser?.displayName || "User"),
           userEmail: auth.currentUser?.email || "-",
           userUid: auth.currentUser?.uid || "system",
           createdAt: serverTimestamp(),

@@ -241,11 +241,11 @@ export default function UserSection() {
                     <div className="flex items-center justify-center gap-2">
                       <button
                         onClick={() => handleToggleStatus(user)}
-                        className={`p-2 rounded-lg transition-colors ${
+                        className={`inline-flex items-center justify-center rounded-lg ${
                           user.status === "active" 
-                            ? "text-red-500 hover:bg-red-50" 
-                            : "text-green-500 hover:bg-green-50"
-                        }`}
+                            ? "bg-amber-500 hover:bg-amber-700" 
+                            : "bg-red-500 hover:bg-red-700"
+                        } px-3 py-2 text-xs font-semibold text-white transition`}
                         title={user.status === "active" ? "Nonaktifkan" : "Aktifkan"}
                       >
                         <Power size={16} />
@@ -255,21 +255,21 @@ export default function UserSection() {
                           setSelectedUser(user);
                           setIsModalOpen(true);
                         }}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="inline-flex items-center justify-center rounded-lg bg-blue-500 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition"
                         title="Edit Role"
                       >
                         <Edit size={16} />
                       </button>
                       <button
                         onClick={() => handleResetPassword(user.email)}
-                        className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                        className="inline-flex items-center justify-center rounded-lg bg-green-500 px-3 py-2 text-xs font-semibold text-white hover:bg-green-700 transition"
                         title="Reset Password"
                       >
                         <Key size={16} />
                       </button>
                       <button
                         onClick={() => handleDeleteUser(user.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="inline-flex items-center justify-center rounded-lg bg-red-500 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 transition"
                         title="Hapus User"
                       >
                         <Trash2 size={16} />

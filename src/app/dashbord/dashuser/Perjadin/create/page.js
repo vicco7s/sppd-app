@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { auth, db } from "@/services/firebases";
-import { collection, getDocs, doc, setDoc, query, where, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, doc, setDoc, query, where, addDoc, serverTimestamp, getDoc } from "firebase/firestore";
 import toast from "react-hot-toast";
 import PerjadinForm from '@/components/PerjadinForm';
 
@@ -92,11 +92,12 @@ const CreatePerjadin = () => {
 
       // Create Notification
       try {
+        const isAdmin = userProfile?.role === 'admin';
         await addDoc(collection(db, "notifications"), {
           title: "Perjadin Baru",
-          message: `Perjadin ke ${formData.tujuan} telah ditambahkan oleh ${userProfile?.name || auth.currentUser?.displayName || 'User'}.`,
+          message: `Perjadin ke ${formData.tujuan} telah ditambahkan oleh ${isAdmin ? auth.currentUser?.email : (userProfile?.name || auth.currentUser?.displayName || 'User')}.`,
           type: "create",
-          userName: userProfile?.name || auth.currentUser?.displayName || "User",
+          userName: isAdmin ? auth.currentUser?.email : (userProfile?.name || auth.currentUser?.displayName || "User"),
           userEmail: auth.currentUser?.email || "-",
           userUid: auth.currentUser?.uid,
           createdAt: serverTimestamp(),

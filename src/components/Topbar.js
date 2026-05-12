@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Bell, User, LogOut, FileText, Plus, RefreshCw, CheckCircle, PlaneLanding, PlaneTakeoffIcon } from "lucide-react";
+import { Bell, User } from "lucide-react";
 import { auth, db } from "@/services/firebases";
 import { signOut } from "firebase/auth";
-import { collection, query, orderBy, limit, onSnapshot, getDocs, where, writeBatch, doc } from "firebase/firestore";
+import { collection, query, orderBy, limit, onSnapshot, getDocs, where, writeBatch, doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { clearAuthCache } from "@/hooks/useInactivityLogout";
+import NotificationDropdown from "@/components/topbar/NotificationDropdown";
+import UserProfileCard from "@/components/topbar/UserProfileCard";
 
 export default function Topbar({ user, role = "User" }) {
     const router = useRouter();
@@ -15,9 +17,52 @@ export default function Topbar({ user, role = "User" }) {
     const [showNotifications, setShowNotifications] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const [openProfile, setOpenProfile] = useState(false);
+    const [employeeName, setEmployeeName] = useState("");
 
     const notificationRef = useRef(null);
     const profileRef = useRef(null);
+
+    // Fetch employee name from pegawai collection based on idPegawai in user collection
+    useEffect(() => {
+        if (!user?.uid) return;
+
+        const fetchEmployeeName = async () => {
+            try {
+                // 1. Get user document from 'user' collection using uid
+                const userDocRef = doc(db, "user", user.uid);
+                const userDocSnap = await getDoc(userDocRef);
+
+                if (userDocSnap.exists()) {
+                    const userData = userDocSnap.data();
+                    const idPegawai = userData.idPegawai;
+
+                    if (idPegawai) {
+                        // 2. Get employee document from 'pegawai' collection using idPegawai
+                        const pegawaiDocRef = doc(db, "pegawai", idPegawai);
+                        const pegawaiDocSnap = await getDoc(pegawaiDocRef);
+
+                        if (pegawaiDocSnap.exists()) {
+                            const pegawaiData = pegawaiDocSnap.data();
+                            setEmployeeName(pegawaiData.nama || "");
+                        } else {
+                            console.log("Pegawai document not found for idPegawai:", idPegawai);
+                            setEmployeeName(user.displayName || "User");
+                        }
+                    } else {
+                        console.log("No idPegawai found for user:", user.uid);
+                        setEmployeeName(user.displayName || "User");
+                    }
+                } else {
+                    console.log("User document not found for uid:", user.uid);
+                    setEmployeeName(user.displayName || "User");
+                }
+            } catch (err) {
+                console.error("Failed to fetch employee name:", err);
+            }
+        };
+
+        fetchEmployeeName();
+    }, [user?.uid]);
 
     // Auto-cleanup old notifications (older than 30 days) - Admin Only
     useEffect(() => {
@@ -133,28 +178,6 @@ export default function Topbar({ user, role = "User" }) {
         }
     };
 
-    const getNotifIcon = (type) => {
-        switch (type) {
-            case 'perjadin': return <FileText size={14} />;
-            case 'pegawai': return <User size={14} />;
-            case 'update': return <RefreshCw size={14} />;
-            case 'status': return <CheckCircle size={14} />;
-            case 'create': return <PlaneTakeoffIcon size={14} />;
-            default: return <Bell size={14} />;
-        }
-    };
-
-    const getNotifColor = (type) => {
-        switch (type) {
-            case 'perjadin': return 'bg-blue-100 text-blue-600';
-            case 'pegawai': return 'bg-green-100 text-green-600';
-            case 'update': return 'bg-amber-100 text-amber-600';
-            case 'status': return 'bg-purple-100 text-purple-600';
-            case 'create': return 'bg-indigo-100 text-indigo-600';
-            default: return 'bg-gray-100 text-gray-600';
-        }
-    };
-
     return (
         <header className="h-16 bg-white flex items-center px-6 shadow-sm">
             <div className="flex-1">
@@ -165,69 +188,22 @@ export default function Topbar({ user, role = "User" }) {
                 <div ref={notificationRef} className="relative">
                     <button
                         onClick={handleMarkAsRead}
-                        className="p-2 rounded-full text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all relative"
+                        className="relative rounded-full border border-slate-200/70 bg-white/80 p-2 text-slate-700 transition duration-200 hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 backdrop-blur-[6px]"
                     >
                         <Bell size={20} />
                         {unreadCount > 0 && (
-                            <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white animate-bounce">
+                            <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-semibold text-white shadow-md">
                                 {unreadCount}
                             </span>
                         )}
                     </button>
 
-                    {showNotifications && (
-                        <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                            <div className="p-4 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
-                                <h3 className="font-bold text-gray-900 text-sm">Notifikasi Terbaru</h3>
-                                <div className="flex gap-1">
-                                    <span className="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-bold uppercase transition-all">Aktivitas</span>
-                                </div>
-                            </div>
-                            <div className="max-h-[350px] overflow-y-auto">
-                                {notifications.length === 0 ? (
-                                    <div className="p-8 text-center">
-                                        <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                                            <Bell size={20} className="text-gray-300" />
-                                        </div>
-                                        <p className="text-sm text-gray-400">Belum ada notifikasi baru</p>
-                                    </div>
-                                ) : (
-                                    notifications.map((notif) => (
-                                        <div
-                                            key={notif.id}
-                                            className={`p-4 border-b border-gray-50 hover:bg-blue-50/10 transition-colors cursor-default group relative ${!notif.isRead ? 'bg-blue-50/40' : ''}`}
-                                        >
-                                            <div className="flex gap-3">
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${getNotifColor(notif.type)} relative`}>
-                                                    {getNotifIcon(notif.type)}
-                                                    {!notif.isRead && (
-                                                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-500 rounded-full border-2 border-white animate-pulse" />
-                                                    )}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <p className={`text-xs leading-tight mb-1 ${!notif.isRead ? 'font-bold text-gray-900' : 'font-medium text-gray-600'}`}>{notif.title}</p>
-                                                    <p className="text-[11px] text-gray-500 leading-relaxed mb-2 line-clamp-2">{notif.message}</p>
-                                                    <div className="flex flex-col gap-1">
-                                                        <span className="text-[10px] text-gray-400 font-bold">
-                                                            Oleh: {notif.userName || notif.userEmail || "Sistem"}
-                                                        </span>
-                                                        <span className="text-[9px] text-gray-400 font-medium">
-                                                            {notif.createdAt?.toDate ? (() => {
-                                                                const d = notif.createdAt.toDate();
-                                                                const date = d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit' });
-                                                                const time = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(':', '.');
-                                                                return `${date}, ${time}`;
-                                                            })() : 'Baru saja'}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-                    )}
+                    <NotificationDropdown
+                        isOpen={showNotifications}
+                        notifications={notifications}
+                        unreadCount={unreadCount}
+                        onMarkAsRead={handleMarkAsRead}
+                    />
                 </div>
 
                 {/* Profile Dropdown */}
@@ -235,33 +211,19 @@ export default function Topbar({ user, role = "User" }) {
                     <button
                         type="button"
                         onClick={() => setOpenProfile(!openProfile)}
-                        className="w-8 h-8 bg-blue-300 rounded-full flex items-center justify-center focus:outline-none"
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200/70 bg-gradient-to-br from-blue-400 to-blue-600 text-sm font-bold text-white transition duration-200 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
                         aria-expanded={openProfile}
                     >
-                        <User size={16} className="text-white" />
+                        {employeeName?.charAt(0)?.toUpperCase() || (user?.displayName?.charAt(0)?.toUpperCase() || "U")}
                     </button>
 
                     {openProfile && (
-                        <div className="absolute right-0 mt-12 w-56 bg-white rounded shadow z-20 border border-gray-100 focus:outline-none">
-                            <div className="p-4 flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-blue-800 flex items-center justify-center text-white font-bold">
-                                    {user?.displayName?.charAt(0) || "U"}
-                                </div>
-                                <div>
-                                    <div className="font-semibold text-black truncate max-w-[140px]">{user?.displayName || "Nama Pengguna"}</div>
-                                    <div className="text-sm text-gray-500 truncate max-w-[140px]">{user?.email || "user@example.com"}</div>
-                                </div>
-                            </div>
-                            <div className="px-4 py-2 border-t border-gray-100">
-                                <button
-                                    onClick={handleLogout}
-                                    className="w-full text-left text-red-600 font-semibold hover:bg-red-50 p-2 rounded focus:outline-none flex items-center gap-2"
-                                >
-                                    <LogOut size={16} />
-                                    Logout
-                                </button>
-                            </div>
-                        </div>
+                        <UserProfileCard
+                            employeeName={employeeName}
+                            userEmail={user?.email}
+                            role={role}
+                            onLogout={handleLogout}
+                        />
                     )}
                 </div>
             </div>

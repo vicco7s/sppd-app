@@ -137,11 +137,12 @@ const EditPerjadinPage = () => {
 
       // Create Notification for Update
       try {
+        const isAdmin = userProfile?.role === 'admin';
         await addDoc(collection(db, "notifications"), {
           title: "Update Perjadin",
-          message: `Data Perjadin ke ${formData.tujuan} telah diperbarui oleh ${userProfile?.name || auth.currentUser?.displayName || 'User'}.`,
+          message: `Data Perjadin ke ${formData.tujuan} telah diperbarui oleh ${isAdmin ? auth.currentUser?.email : (userProfile?.name || auth.currentUser?.displayName || 'User')}.`,
           type: "update",
-          userName: userProfile?.name || auth.currentUser?.displayName || "User",
+          userName: isAdmin ? auth.currentUser?.email : (userProfile?.name || auth.currentUser?.displayName || "User"),
           userEmail: auth.currentUser?.email || "-",
           userUid: auth.currentUser?.uid,
           createdAt: serverTimestamp(),

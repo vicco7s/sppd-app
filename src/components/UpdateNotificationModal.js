@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Bell, Sparkles, Zap, Calendar, Bot, Send, ArrowRight, PenBox, Pen, PenLineIcon, CloudSyncIcon, PaperclipIcon, PrinterIcon, Paperclip, Flame, PartyPopperIcon, CloverIcon, FlagTriangleLeft, PrinterCheck, Database, History } from "lucide-react";
+import { X, Bell, Sparkles, Zap, Calendar, Bot, Send, ArrowRight, Pen, Paperclip, PrinterIcon, Flame, PartyPopperIcon, CloverIcon, FlagTriangleLeft, PrinterCheck, Database, History } from "lucide-react";
 import { db } from "@/services/firebases";
 import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function UpdateNotificationModal() {
     const [isOpen, setIsOpen] = useState(false);
@@ -16,8 +17,8 @@ export default function UpdateNotificationModal() {
                 const q = query(collection(db, "appUpdates"), orderBy("createdAt", "desc"), limit(5));
                 const querySnapshot = await getDocs(q);
                 const updatesData = querySnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
+                    ...doc.data(),
+                    id: doc.id  // must come AFTER spread — prevents stored id:"" from overriding
                 }));
                 setUpdates(updatesData);
             } catch (error) {
@@ -43,157 +44,355 @@ export default function UpdateNotificationModal() {
 
     const getIcon = (iconName) => {
         const iconMap = {
-            Bell: <Bell size={14} className="text-yellow-500" />,
-            Sparkles: <Sparkles size={14} className="text-indigo-600" />,
-            Zap: <Zap size={14} className="text-lime-500"/>,
-            PrinterCheck: <PrinterCheck className="text-green-500" size={14} />,
-            Database: <Database className="text-gray-500" size={14} />,
-            CloverIcon: <CloverIcon className="text-blue-500" size={14} />,
-            PartyPopperIcon: <PartyPopperIcon className="text-orange-700" size={14} />,
-            Flame: <Flame size={14} className="text-red-500"/>,
-            Bot: <Bot size={14} className="text-indigo-700"/>,
-            Send: <Send size={14} className="text-indigo-600"/>,
-            Calendar: <Calendar size={14} className="text-yellow-500"/>,
-            Pen: <Pen size={14} className="text-gray-500"/>,
-            Paperclip: <Paperclip size={14} className="text-blue-500"/>,
-            PrinterIcon: <PrinterIcon size={14} className="text-green-500"/>,
-            CloudSyncIcon: <CloudSyncIcon size={14} className="text-green-500"/>,
-            FlagTriangleLeft: <FlagTriangleLeft size={14} className="text-blue-500"/>,
-            History: <History size={14} className="text-blue-500"/>,
+            Bell: <Bell size={13} className="text-amber-400" />,
+            Sparkles: <Sparkles size={13} className="text-violet-400" />,
+            Zap: <Zap size={13} className="text-lime-400" />,
+            PrinterCheck: <PrinterCheck size={13} className="text-emerald-400" />,
+            Database: <Database size={13} className="text-sky-400" />,
+            CloverIcon: <CloverIcon size={13} className="text-blue-400" />,
+            PartyPopperIcon: <PartyPopperIcon size={13} className="text-orange-400" />,
+            Flame: <Flame size={13} className="text-rose-400" />,
+            Bot: <Bot size={13} className="text-indigo-400" />,
+            Send: <Send size={13} className="text-blue-400" />,
+            Calendar: <Calendar size={13} className="text-amber-400" />,
+            Pen: <Pen size={13} className="text-slate-400" />,
+            Paperclip: <Paperclip size={13} className="text-blue-400" />,
+            PrinterIcon: <PrinterIcon size={13} className="text-emerald-400" />,
+            FlagTriangleLeft: <FlagTriangleLeft size={13} className="text-blue-400" />,
+            History: <History size={13} className="text-blue-400" />,
         };
-        return iconMap[iconName] || <Zap size={14} />;
+        return iconMap[iconName] || <Zap size={13} className="text-blue-400" />;
     };
 
     return (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-[200] p-4 animate-in fade-in duration-300">
-            <div
-                className="bg-white rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.2)] w-full max-w-[400px] overflow-hidden transform transition-all animate-in zoom-in-95 slide-in-from-bottom-4 duration-500"
-            >
-                {/* Modern Header - No outer border */}
-                <div className="relative bg-gradient-to-br from-blue-600 to-indigo-700 p-7 text-white overflow-hidden">
-                    {/* Decorative Elements */}
-                    <div className="absolute top-[-10%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-2xl" />
-                    <div className="absolute bottom-[-20%] left-[-10%] w-24 h-24 bg-blue-400/20 rounded-full blur-xl" />
-
-                    <div className="flex justify-between items-start relative z-10">
-                        <div className="flex flex-col gap-3">
-                            <div className="bg-white/20 backdrop-blur-xl w-10 h-10 rounded-2xl flex items-center justify-center border border-white/20 shadow-lg">
-                                <Sparkles className="text-white animate-pulse" size={20} />
-                            </div>
-                            <div>
-                                <h2 className="text-xl font-extrabold tracking-tight leading-none mb-1">What's New?</h2>
-                                <div className="flex flex-col gap-1.5 mt-2">
-                                    <div className="flex items-center gap-1.5 bg-black/10 backdrop-blur-md px-2.5 py-1 rounded-lg w-fit border border-white/5">
-                                        <Bot size={11} className="text-blue-200" />
-                                        <span className="text-[10px] font-bold text-blue-50 tracking-wide uppercase">Gemini AI 2.5 Flash</span>
-                                    </div>
-                                    <p className="text-blue-100/70 text-[10px] font-semibold flex items-center gap-1.5 ml-0.5">
-                                        <Calendar size={11} />
-                                        Last Update: {latestUpdate.date || "Terbaru"}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <button
-                            onClick={handleClose}
-                            className="bg-white/10 hover:bg-white/20 backdrop-blur-md p-2 rounded-xl text-white/80 hover:text-white transition-all group"
-                        >
-                            <X size={16} className="group-hover:rotate-90 transition-transform duration-300" />
-                        </button>
+        <AnimatePresence>
+            {isOpen && (
+                /* Backdrop */
+                <motion.div
+                    key="glass-modal-backdrop"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+                    style={{
+                        background: "radial-gradient(ellipse at 50% 40%, rgba(99,102,241,0.18) 0%, rgba(10,10,30,0.72) 100%)",
+                        backdropFilter: "blur(20px)",
+                        WebkitBackdropFilter: "blur(20px)",
+                    }}
+                >
+                    {/* Ambient glow orbs in background */}
+                    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                        <motion.div
+                            animate={{ scale: [1, 1.12, 1], opacity: [0.4, 0.65, 0.4] }}
+                            transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+                            className="absolute -top-20 left-1/4 w-80 h-80 rounded-full"
+                            style={{ background: "radial-gradient(circle, rgba(99,102,241,0.35) 0%, transparent 70%)", filter: "blur(40px)" }}
+                        />
+                        <motion.div
+                            animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.55, 0.3] }}
+                            transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+                            className="absolute -bottom-20 right-1/4 w-72 h-72 rounded-full"
+                            style={{ background: "radial-gradient(circle, rgba(59,130,246,0.3) 0%, transparent 70%)", filter: "blur(40px)" }}
+                        />
                     </div>
-                </div>
 
-                {/* Simplified Content Area */}
-                <div className="p-7 bg-white max-h-[400px] overflow-y-auto custom-scrollbar">
-                    <div className="space-y-8">
-                        {/* Latest Update */}
-                        <div className="space-y-5">
-                            <div className="flex items-center gap-2 mb-1">
-                                <div className="w-1 h-3 bg-blue-600 rounded-full" />
-                                <span className="text-blue-600 text-[10px] font-black uppercase tracking-widest">Fitur & Pembaruan ({latestUpdate.version || "v3.0"})</span>
-                            </div>
-
-                            <div className="grid gap-4">
-                                {latestUpdate.items?.map((item, idx) => (
-                                    <UpdateItem
-                                        key={idx}
-                                        icon={getIcon(item.icon)}
-                                        text={item.text}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* History / Previous Updates */}
-                        {otherUpdates.length > 0 && (
-                            <div className="space-y-6 pt-4 border-t border-gray-50">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <History className="text-gray-400" size={14} />
-                                    <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Riwayat Update</span>
-                                </div>
-                                
-                                {otherUpdates.map((update) => (
-                                    <div key={update.id} className="space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[11px] font-bold text-gray-900 bg-gray-100 px-2 py-0.5 rounded-md">{update.version}</span>
-                                            <span className="text-[10px] text-gray-400 font-medium">{update.date}</span>
-                                        </div>
-                                        <div className="grid gap-3 pl-2 border-l-2 border-gray-50">
-                                            {update.items?.map((item, idx) => (
-                                                <div key={idx} className="flex gap-3 items-start">
-                                                    <div className="mt-1 w-1 h-1 bg-gray-300 rounded-full shrink-0" />
-                                                    <p className="text-[11px] text-gray-500 font-medium leading-relaxed">{item.text}</p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Clean Footer */}
-                <div className="px-7 py-6 bg-gray-50/50 flex items-center justify-between border-t border-gray-100">
-                    <div className="flex items-center gap-1.5 opacity-40">
-                        <div className="w-1.5 h-1.5 bg-green-700 rounded-full animate-pulse" />
-                        <span className="text-[9px] font-black tracking-tighter text-gray-900 uppercase">{latestUpdate.version || "v3.0.0.stable"}</span>
-                    </div>
-                    <button
-                        onClick={handleClose}
-                        className="group flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-2xl font-bold text-xs hover:bg-blue-700 transition-all active:scale-95 shadow-sm"
+                    {/* Modal Card */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 28, scale: 0.94 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 20, scale: 0.96 }}
+                        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                        className="relative w-full max-w-[420px] rounded-[2.5rem] overflow-hidden"
+                        style={{
+                            background: "linear-gradient(145deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.06) 100%)",
+                            backdropFilter: "blur(60px) saturate(200%)",
+                            WebkitBackdropFilter: "blur(60px) saturate(200%)",
+                            border: "1px solid rgba(255,255,255,0.18)",
+                            boxShadow: "0 0 0 1px rgba(255,255,255,0.06) inset, 0 40px 80px -20px rgba(0,0,0,0.55), 0 0 60px -10px rgba(99,102,241,0.25)",
+                        }}
                     >
-                        <span>Tutup</span>
-                        <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
-                    </button>
-                </div>
-            </div>
+                        {/* Inner highlight line at top */}
+                        <div
+                            className="absolute top-0 left-6 right-6 h-px rounded-full"
+                            style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent)" }}
+                        />
 
-            <style jsx>{`
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 4px;
+                        {/* ─────── HEADER ─────── */}
+                        <div className="relative px-7 pt-7 pb-6 overflow-hidden">
+                            {/* Header glass layer */}
+                            <div
+                                className="absolute inset-0"
+                                style={{
+                                    background: "linear-gradient(135deg, rgba(99,102,241,0.22) 0%, rgba(59,130,246,0.14) 60%, transparent 100%)",
+                                }}
+                            />
+                            {/* Soft orb top-right */}
+                            <div
+                                className="absolute -top-8 -right-8 w-40 h-40 rounded-full pointer-events-none"
+                                style={{ background: "radial-gradient(circle, rgba(139,92,246,0.28) 0%, transparent 70%)", filter: "blur(24px)" }}
+                            />
+
+                            <div className="relative z-10 flex items-start justify-between">
+                                <div className="flex items-center gap-4">
+                                    {/* Icon badge */}
+                                    <motion.div
+                                        animate={{ y: [0, -3, 0] }}
+                                        transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+                                        className="relative"
+                                    >
+                                        <div
+                                            className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                                            style={{
+                                                background: "linear-gradient(135deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.08) 100%)",
+                                                border: "1px solid rgba(255,255,255,0.25)",
+                                                boxShadow: "0 4px 16px rgba(99,102,241,0.3), inset 0 1px 0 rgba(255,255,255,0.3)",
+                                            }}
+                                        >
+                                            <Sparkles className="text-white" size={20} />
+                                        </div>
+                                        {/* Glow under icon */}
+                                        <div
+                                            className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-3 rounded-full"
+                                            style={{ background: "rgba(139,92,246,0.5)", filter: "blur(6px)" }}
+                                        />
+                                    </motion.div>
+
+                                    <div>
+                                        <h2 className="text-[20px] font-extrabold tracking-tight text-white leading-none">
+                                            What's New
+                                        </h2>
+                                        <div className="flex items-center gap-2 mt-2">
+                                            {/* Version pill */}
+                                            <div
+                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                                                style={{
+                                                    background: "rgba(255,255,255,0.1)",
+                                                    border: "1px solid rgba(255,255,255,0.15)",
+                                                    backdropFilter: "blur(10px)",
+                                                }}
+                                            >
+                                                <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                                                <span className="text-[10px] font-bold text-white/80 uppercase tracking-wider">
+                                                    {latestUpdate.version || "v3.0"}
+                                                </span>
+                                            </div>
+                                            {/* Date pill */}
+                                            <div className="flex items-center gap-1 px-2 py-1 rounded-full" style={{ background: "rgba(255,255,255,0.07)" }}>
+                                                <Calendar size={9} className="text-white/50" />
+                                                <span className="text-[9px] font-semibold text-white/50">
+                                                    {latestUpdate.date || "Terbaru"}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Close button */}
+                                <motion.button
+                                    onClick={handleClose}
+                                    whileHover={{ scale: 1.08 }}
+                                    whileTap={{ scale: 0.94 }}
+                                    className="flex items-center justify-center w-9 h-9 rounded-2xl transition-all"
+                                    style={{
+                                        background: "rgba(255,255,255,0.1)",
+                                        border: "1px solid rgba(255,255,255,0.16)",
+                                        backdropFilter: "blur(10px)",
+                                    }}
+                                >
+                                    <X size={15} className="text-white/70" />
+                                </motion.button>
+                            </div>
+
+                            {/* AI badge */}
+                            <div className="relative z-10 mt-4 flex items-center gap-1.5 w-fit px-2.5 py-1 rounded-lg"
+                                style={{
+                                    background: "rgba(255,255,255,0.06)",
+                                    border: "1px solid rgba(255,255,255,0.1)",
+                                }}
+                            >
+                                <Bot size={11} className="text-indigo-300" />
+                                <span className="text-[9px] font-bold text-indigo-200/80 tracking-widest uppercase">Powered by Gemini AI 2.5 Flash</span>
+                            </div>
+                        </div>
+
+                        {/* ─────── SCROLLABLE CONTENT ─────── */}
+                        <div
+                            className="max-h-[340px] overflow-y-auto px-6 pb-2 pt-1 liquid-glass-scroll"
+                            style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.12) transparent" }}
+                        >
+                            <div className="space-y-3 pb-4">
+                                {/* Latest update label */}
+                                <div className="flex items-center gap-2 mb-3 px-1">
+                                    <div
+                                        className="h-3 w-px rounded-full"
+                                        style={{ background: "linear-gradient(to bottom, rgba(139,92,246,0.9), rgba(59,130,246,0.5))" }}
+                                    />
+                                    <span className="text-[10px] font-black uppercase tracking-[0.18em]"
+                                        style={{ color: "rgba(220,225,255,0.9)" }}>
+                                        Fitur &amp; Pembaruan
+                                    </span>
+                                </div>
+
+                                {/* Latest update items */}
+                                <div className="space-y-2">
+                                    {latestUpdate.items?.map((item, idx) => (
+                                        <GlassUpdateItem
+                                            key={`latest-item-${idx}`}
+                                            icon={getIcon(item.icon)}
+                                            text={item.text}
+                                            index={idx}
+                                        />
+                                    ))}
+                                </div>
+
+                                {/* History section */}
+                                {otherUpdates.length > 0 && (
+                                    <div className="space-y-4 pt-4 mt-2">
+                                        <div
+                                            className="h-px w-full"
+                                            style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)" }}
+                                        />
+                                        <div className="flex items-center gap-2 px-1">
+                                            <History size={11} className="text-white/55" />
+                                            <span className="text-[9px] font-black uppercase tracking-[0.18em] text-white/55">
+                                                Riwayat Update
+                                            </span>
+                                        </div>
+
+                                        {otherUpdates.map((update, updateIdx) => (
+                                            <div key={`history-update-${updateIdx}`} className="space-y-2">
+                                                {/* Version header */}
+                                                <div className="flex items-center justify-between px-1">
+                                                    <span
+                                                        className="text-[10px] font-bold px-2.5 py-0.5 rounded-full"
+                                                        style={{
+                                                            background: "rgba(255,255,255,0.12)",
+                                                            border: "1px solid rgba(255,255,255,0.18)",
+                                                            color: "rgba(220,230,255,0.95)",
+                                                        }}
+                                                    >
+                                                        {update.version}
+                                                    </span>
+                                                    <span className="text-[9px] font-medium text-white/55">{update.date}</span>
+                                                </div>
+                                                {/* History items */}
+                                                <div className="space-y-1.5 pl-2 border-l border-white/[0.06]">
+                                                    {update.items?.map((item, idx) => (
+                                                        <div key={`history-${updateIdx}-item-${idx}`} className="flex gap-2.5 items-start">
+                                                            <div className="mt-1.5 w-1 h-1 rounded-full shrink-0 bg-white/40" />
+                                                            <p className="text-[10px] text-white/70 font-medium leading-relaxed">{item.text}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* ─────── FOOTER ─────── */}
+                        <div
+                            className="px-6 py-5 flex items-center justify-between"
+                            style={{
+                                background: "linear-gradient(to top, rgba(0,0,0,0.2) 0%, transparent 100%)",
+                                borderTop: "1px solid rgba(255,255,255,0.06)",
+                            }}
+                        >
+                            {/* Status dot + version */}
+                            <div className="flex items-center gap-2">
+                                <div
+                                    className="w-1.5 h-1.5 rounded-full bg-emerald-400"
+                                    style={{ boxShadow: "0 0 6px rgba(52,211,153,0.8)" }}
+                                />
+                                <span className="text-[9px] font-bold uppercase tracking-widest text-white/50">
+                                    {latestUpdate.version || "v3.0.0.stable"}
+                                </span>
+                            </div>
+
+                            {/* Glossy close button */}
+                            <motion.button
+                                onClick={handleClose}
+                                whileHover={{ scale: 1.04, boxShadow: "0 8px 28px rgba(99,102,241,0.5), inset 0 1px 0 rgba(255,255,255,0.3)" }}
+                                whileTap={{ scale: 0.97 }}
+                                className="group relative flex items-center gap-2 px-6 py-2.5 rounded-2xl overflow-hidden text-xs font-bold text-white transition-all"
+                                style={{
+                                    background: "linear-gradient(135deg, rgba(99,102,241,0.85) 0%, rgba(59,130,246,0.85) 100%)",
+                                    border: "1px solid rgba(255,255,255,0.2)",
+                                    boxShadow: "0 4px 20px rgba(99,102,241,0.35), inset 0 1px 0 rgba(255,255,255,0.2)",
+                                    backdropFilter: "blur(10px)",
+                                }}
+                            >
+                                {/* Glossy sheen */}
+                                <div
+                                    className="absolute inset-0 pointer-events-none"
+                                    style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.18) 0%, transparent 55%)" }}
+                                />
+                                <span className="relative z-10">Tutup</span>
+                                <ArrowRight size={13} className="relative z-10 transition-transform group-hover:translate-x-0.5" />
+                            </motion.button>
+                        </div>
+
+                        {/* Bottom inner highlight */}
+                        <div
+                            className="absolute bottom-0 left-8 right-8 h-px rounded-full pointer-events-none"
+                            style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)" }}
+                        />
+                    </motion.div>
+                </motion.div>
+            )}
+
+            <style jsx global>{`
+                .liquid-glass-scroll::-webkit-scrollbar {
+                    width: 3px;
                 }
-                .custom-scrollbar::-webkit-scrollbar-track {
+                .liquid-glass-scroll::-webkit-scrollbar-track {
                     background: transparent;
                 }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: #e2e8f0;
+                .liquid-glass-scroll::-webkit-scrollbar-thumb {
+                    background: rgba(255,255,255,0.12);
                     border-radius: 10px;
                 }
+                .liquid-glass-scroll::-webkit-scrollbar-thumb:hover {
+                    background: rgba(255,255,255,0.22);
+                }
             `}</style>
-        </div>
+        </AnimatePresence>
     );
 }
 
-function UpdateItem({ icon, text }) {
+function GlassUpdateItem({ icon, text, index }) {
     return (
-        <div className="flex gap-4 group items-center p-0.5">
-            <div className="bg-gray-50 w-8 h-8 rounded-xl flex items-center justify-center group-hover:bg-blue-50 transition-colors shrink-0">
+        <motion.div
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.35, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
+            whileHover={{
+                scale: 1.015,
+                boxShadow: "0 4px 20px rgba(99,102,241,0.15), inset 0 1px 0 rgba(255,255,255,0.1)",
+            }}
+            className="flex gap-3.5 items-center px-4 py-3 rounded-2xl transition-all cursor-default"
+            style={{
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.09)",
+                backdropFilter: "blur(10px)",
+            }}
+        >
+            {/* Icon glass chip */}
+            <div
+                className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                style={{
+                    background: "linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.05) 100%)",
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15)",
+                }}
+            >
                 {icon}
             </div>
-            <p className="text-[12px] text-gray-700 font-semibold group-hover:text-gray-900 transition-colors">
+            <p className="text-[12px] font-semibold leading-snug" style={{ color: "rgba(245,248,255,0.97)" }}>
                 {text}
             </p>
-        </div>
+        </motion.div>
     );
 }
