@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Bell, ChevronDown, ChevronRight, LogOut, User, Edit, Trash2, Printer, Plus, ArrowUp, ArrowDown } from "lucide-react";
+import { Bell, ChevronDown, ChevronRight, LogOut, User, Edit, Trash2, Printer, Plus, ArrowUp, ArrowDown, FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/services/firebases";
 import { signOut, onAuthStateChanged } from "firebase/auth";
@@ -14,6 +14,8 @@ import { useInactivityLogout, clearAuthCache } from "@/hooks/useInactivityLogout
 import Topbar from "@/components/Topbar";
 import KwitansiSection from "@/components/KwitansiSection";
 import Pagination from "@/components/Pagination";
+import { deleteFile } from "@/lib/supabase/deleteFile";
+import { createSignedUrl } from "@/lib/supabase/createSignedUrl";
 
 export default function DashuserPage() {
   useInactivityLogout(1800000); // 30 minutes auto logout
@@ -123,6 +125,22 @@ export default function DashuserPage() {
   const handleDelete = async (id, type = "perjadinkota") => {
     if (window.confirm("Apakah Anda yakin ingin menghapus data ini?")) {
       try {
+        // Jika menghapus perjadin, cek apakah ada file Supabase yang perlu dihapus
+        if (type === "perjadinkota") {
+          const docSnap = await getDoc(doc(db, "perjadinkota", id));
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.suratPath) {
+              try {
+                await deleteFile(data.suratPath);
+              } catch (supabaseErr) {
+                console.error("Failed to delete Supabase file:", supabaseErr);
+                // Lanjutkan penghapusan data Firestore meskipun hapus file gagal
+              }
+            }
+          }
+        }
+
         await deleteDoc(doc(db, type, id));
         if (type === "pegawai") {
           setPegawaiList(prev => prev.filter(item => item.id !== id));
@@ -225,8 +243,21 @@ export default function DashuserPage() {
     } catch (error) {
       toast.dismiss("sppd-loading");
       toast.dismiss("nota-loading");
-      console.error("Error generating PDF:", error);
-      toast.error("Gagal membuat PDF");
+    }
+  };
+
+  const handleViewFile = async (path) => {
+    if (!path) return;
+    try {
+      const url = await createSignedUrl(path);
+      if (url) {
+        window.open(url, '_blank');
+      } else {
+        toast.error("Gagal mendapatkan akses file");
+      }
+    } catch (error) {
+      console.error("Error viewing file:", error);
+      toast.error("Gagal membuka file");
     }
   };
 
@@ -524,6 +555,15 @@ export default function DashuserPage() {
                             </td>
                             <td className="px-4 py-3 border-b text-sm text-center">
                               <div className="flex items-center justify-center gap-2">
+                                {item.suratPath && (
+                                  <button
+                                    onClick={() => handleViewFile(item.suratPath)}
+                                    className="inline-flex items-center justify-center rounded-lg bg-indigo-500 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700 transition"
+                                    title="Lihat Dokumen (Secure)"
+                                  >
+                                    <FileText size={16} />
+                                  </button>
+                                )}
                                 {(!item.status || item.status === 'Menunggu') ? (
                                   <button
                                     onClick={() => router.push(`/dashbord/dashuser/Perjadin/edit/${item.id}`)}

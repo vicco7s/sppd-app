@@ -10,6 +10,7 @@ import { model } from "@/services/firebases";
 import PersonilSection from './perjadin/PersonilSection';
 import NotaSection from './perjadin/NotaSection';
 import LaporanAISection from './perjadin/LaporanAISection';
+import UploadSuratAI from './perjadin/UploadSuratAI';
 
 const PerjadinForm = ({ onSubmit, isSubmitting, initialData = null, pegawaiList = [], isEdit = false }) => {
     const [isAutoSpt, setIsAutoSpt] = useState(true);
@@ -42,8 +43,30 @@ const PerjadinForm = ({ onSubmit, isSubmitting, initialData = null, pegawaiList 
         dari: '',
         isinota: '',
         tglhasil: Timestamp.now(),
-        status: 'Menunggu'
+        status: 'Menunggu',
+        suratUrl: '',
+        suratPath: '',
+        suratFileName: ''
     });
+
+    const handleAiData = (extractedData) => {
+        if (!extractedData) return;
+        
+        setFormData(prev => ({
+            ...prev,
+            suratDari: extractedData.suratDari || prev.suratDari,
+            perihalSurat: extractedData.perihalSurat || prev.perihalSurat,
+            tanggalSurat: extractedData.tanggalSurat || prev.tanggalSurat,
+            tujuan: extractedData.tujuan || prev.tujuan,
+            untuk: extractedData.untuk || prev.untuk,
+            tanggalBerangkat: extractedData.tanggalBerangkat || prev.tanggalBerangkat,
+            tanggalKembali: extractedData.tanggalKembali || prev.tanggalKembali,
+            keterangan: extractedData.keterangan || prev.keterangan,
+            suratUrl: extractedData.suratUrl || prev.suratUrl,
+            suratPath: extractedData.suratPath || prev.suratPath,
+            suratFileName: extractedData.suratFileName || prev.suratFileName,
+        }));
+    };
 
     useEffect(() => {
         if (initialData) {
@@ -254,6 +277,14 @@ const PerjadinForm = ({ onSubmit, isSubmitting, initialData = null, pegawaiList 
                     onChange={handleChange}
                     placeholder="contoh : Bapelitbang Kab. Tapin"
                     className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                />
+            </div>
+
+            <div className="space-y-2">
+                <UploadSuratAI 
+                    onDataExtracted={handleAiData} 
+                    currentData={formData} 
+                    isNotaDinas={useNota} 
                 />
             </div>
 
