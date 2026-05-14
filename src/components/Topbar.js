@@ -10,6 +10,7 @@ import { toast } from "react-hot-toast";
 import { clearAuthCache } from "@/hooks/useInactivityLogout";
 import NotificationDropdown from "@/components/topbar/NotificationDropdown";
 import UserProfileCard from "@/components/topbar/UserProfileCard";
+import { motion } from "framer-motion";
 
 export default function Topbar({ user, role = "User" }) {
     const router = useRouter();
@@ -186,9 +187,12 @@ export default function Topbar({ user, role = "User" }) {
             <div className="flex items-center gap-4 relative">
                 {/* Notification Bell */}
                 <div ref={notificationRef} className="relative">
-                    <button
+                    <motion.button
                         onClick={handleMarkAsRead}
-                        className="relative rounded-full border border-slate-200/70 bg-white/80 p-2 text-slate-700 transition duration-200 hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 backdrop-blur-[6px]"
+                        whileHover={{ scale: 1.15 }}
+                        whileTap={{ scale: 0.85 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                        className="relative rounded-full border border-slate-200/70 bg-white/80 p-2 text-slate-700 hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 backdrop-blur-[6px]"
                     >
                         <Bell size={20} />
                         {unreadCount > 0 && (
@@ -196,7 +200,7 @@ export default function Topbar({ user, role = "User" }) {
                                 {unreadCount}
                             </span>
                         )}
-                    </button>
+                    </motion.button>
 
                     <NotificationDropdown
                         isOpen={showNotifications}
@@ -208,23 +212,25 @@ export default function Topbar({ user, role = "User" }) {
 
                 {/* Profile Dropdown */}
                 <div ref={profileRef} className="relative flex items-center gap-4">
-                    <button
+                    <motion.button
                         type="button"
                         onClick={() => setOpenProfile(!openProfile)}
-                        className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200/70 bg-gradient-to-br from-blue-400 to-blue-600 text-sm font-bold text-white transition duration-200 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+                        whileHover={{ scale: 1.15 }}
+                        whileTap={{ scale: 0.85 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200/70 bg-gradient-to-br from-blue-400 to-blue-600 text-sm font-bold text-white hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
                         aria-expanded={openProfile}
                     >
                         {employeeName?.charAt(0)?.toUpperCase() || (user?.displayName?.charAt(0)?.toUpperCase() || "U")}
-                    </button>
+                    </motion.button>
 
-                    {openProfile && (
-                        <UserProfileCard
-                            employeeName={employeeName}
-                            userEmail={user?.email}
-                            role={role}
-                            onLogout={handleLogout}
-                        />
-                    )}
+                    <UserProfileCard
+                        isOpen={openProfile}
+                        employeeName={employeeName}
+                        userEmail={user?.email}
+                        role={role}
+                        onLogout={handleLogout}
+                    />
                 </div>
             </div>
         </header>
