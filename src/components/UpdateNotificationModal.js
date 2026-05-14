@@ -73,43 +73,21 @@ export default function UpdateNotificationModal() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                    className="fixed inset-0 z-[200] flex items-center justify-center p-4"
-                    style={{
-                        background: "radial-gradient(ellipse at 50% 40%, rgba(99,102,241,0.18) 0%, rgba(10,10,30,0.72) 100%)",
-                        backdropFilter: "blur(20px)",
-                        WebkitBackdropFilter: "blur(20px)",
-                    }}
+                    transition={{ duration: 0.3 }}
+                    className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md"
                 >
-                    {/* Ambient glow orbs in background */}
-                    <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                        <motion.div
-                            animate={{ scale: [1, 1.12, 1], opacity: [0.4, 0.65, 0.4] }}
-                            transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-                            className="absolute -top-20 left-1/4 w-80 h-80 rounded-full"
-                            style={{ background: "radial-gradient(circle, rgba(99,102,241,0.35) 0%, transparent 70%)", filter: "blur(40px)" }}
-                        />
-                        <motion.div
-                            animate={{ scale: [1, 1.08, 1], opacity: [0.3, 0.55, 0.3] }}
-                            transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-                            className="absolute -bottom-20 right-1/4 w-72 h-72 rounded-full"
-                            style={{ background: "radial-gradient(circle, rgba(59,130,246,0.3) 0%, transparent 70%)", filter: "blur(40px)" }}
-                        />
-                    </div>
-
                     {/* Modal Card */}
                     <motion.div
-                        initial={{ opacity: 0, y: 28, scale: 0.94 }}
+                        initial={{ opacity: 0, y: 30, scale: 0.9 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 20, scale: 0.96 }}
-                        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                        className="relative w-full max-w-[420px] rounded-[2.5rem] overflow-hidden"
+                        exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                        transition={{ type: "spring", stiffness: 350, damping: 20, mass: 1 }}
+                        className="relative w-full max-w-[420px] rounded-[2.5rem] overflow-hidden shadow-2xl"
                         style={{
                             background: "linear-gradient(145deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.06) 100%)",
-                            backdropFilter: "blur(60px) saturate(200%)",
-                            WebkitBackdropFilter: "blur(60px) saturate(200%)",
+                            backdropFilter: "blur(30px) saturate(150%)",
+                            WebkitBackdropFilter: "blur(30px) saturate(150%)",
                             border: "1px solid rgba(255,255,255,0.18)",
-                            boxShadow: "0 0 0 1px rgba(255,255,255,0.06) inset, 0 40px 80px -20px rgba(0,0,0,0.55), 0 0 60px -10px rgba(99,102,241,0.25)",
                         }}
                     >
                         {/* Inner highlight line at top */}
@@ -160,7 +138,7 @@ export default function UpdateNotificationModal() {
 
                                     <div>
                                         <h2 className="text-[20px] font-extrabold tracking-tight text-white leading-none">
-                                            What's New
+                                            What's a New ?
                                         </h2>
                                         <div className="flex items-center gap-2 mt-2">
                                             {/* Version pill */}
@@ -191,13 +169,13 @@ export default function UpdateNotificationModal() {
                                 {/* Close button */}
                                 <motion.button
                                     onClick={handleClose}
-                                    whileHover={{ scale: 1.08 }}
-                                    whileTap={{ scale: 0.94 }}
-                                    className="flex items-center justify-center w-9 h-9 rounded-2xl transition-all"
+                                    whileHover={{ scale: 1.15 }}
+                                    whileTap={{ scale: 0.85 }}
+                                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                                    className="flex items-center justify-center w-9 h-9 rounded-2xl"
                                     style={{
                                         background: "rgba(255,255,255,0.1)",
                                         border: "1px solid rgba(255,255,255,0.16)",
-                                        backdropFilter: "blur(10px)",
                                     }}
                                 >
                                     <X size={15} className="text-white/70" />
@@ -311,26 +289,23 @@ export default function UpdateNotificationModal() {
                                 </span>
                             </div>
 
-                            {/* Glossy close button */}
+                            {/* Liquid glass close button */}
                             <motion.button
                                 onClick={handleClose}
-                                whileHover={{ scale: 1.04, boxShadow: "0 8px 28px rgba(99,102,241,0.5), inset 0 1px 0 rgba(255,255,255,0.3)" }}
-                                whileTap={{ scale: 0.97 }}
-                                className="group relative flex items-center gap-2 px-6 py-2.5 rounded-2xl overflow-hidden text-xs font-bold text-white transition-all"
+                                whileHover={{ scale: 1.05, backgroundColor: "rgba(255, 255, 255, 0.15)" }}
+                                whileTap={{ scale: 0.95 }}
+                                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                                className="group relative flex items-center gap-2 px-6 py-2.5 rounded-2xl overflow-hidden text-xs font-bold text-white shadow-sm"
                                 style={{
-                                    background: "linear-gradient(135deg, rgba(99,102,241,0.85) 0%, rgba(59,130,246,0.85) 100%)",
-                                    border: "1px solid rgba(255,255,255,0.2)",
-                                    boxShadow: "0 4px 20px rgba(99,102,241,0.35), inset 0 1px 0 rgba(255,255,255,0.2)",
-                                    backdropFilter: "blur(10px)",
+                                    background: "rgba(255, 255, 255, 0.08)",
+                                    backdropFilter: "blur(12px)",
+                                    WebkitBackdropFilter: "blur(12px)",
+                                    border: "1px solid rgba(255, 255, 255, 0.15)",
+                                    boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.1)",
                                 }}
                             >
-                                {/* Glossy sheen */}
-                                <div
-                                    className="absolute inset-0 pointer-events-none"
-                                    style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.18) 0%, transparent 55%)" }}
-                                />
                                 <span className="relative z-10">Tutup</span>
-                                <ArrowRight size={13} className="relative z-10 transition-transform group-hover:translate-x-0.5" />
+                                <ArrowRight size={13} className="relative z-10 transition-transform group-hover:translate-x-0.5 opacity-80" />
                             </motion.button>
                         </div>
 
