@@ -79,23 +79,36 @@ function drawTextWithPagination(pdfDoc, text, x, y, maxWidth, lineHeight, pageHe
 }
 
 function buildMaksudTujuan(data) {
-    const perihal = String(data.perihalSurat || "").trim();
-    const isNota = Boolean(data.isinota || data.dari);
+    // Prioritas utama: Gunakan field 'Maksud / Untuk' (data.untuk) yang sudah diisi manual/AI oleh user
+    if (data.untuk && data.untuk.trim() !== "" && data.untuk.trim() !== "-") {
+        return data.untuk.trim();
+    }
 
+    // Fallback jika 'untuk' kosong
+    const perihal = String(data.perihalSurat || "").trim();
     if (!perihal) {
         return "-";
     }
 
+    const isNota = Boolean(data.isinota || data.dari);
     if (isNota) {
         return perihal;
     }
 
     const lowerPerihal = perihal.toLowerCase();
-    if (lowerPerihal.startsWith("mengikuti ")) {
+    // Jika perihal sudah diawali kata kerja, langsung gunakan
+    if (
+        lowerPerihal.startsWith("mengikuti ") || 
+        lowerPerihal.startsWith("menghadiri ") || 
+        lowerPerihal.startsWith("melaksanakan ") || 
+        lowerPerihal.startsWith("koordinasi ") ||
+        lowerPerihal.startsWith("konsultasi ")
+    ) {
         return perihal;
     }
 
-    return `Mengikuti ${perihal}`;
+    // Default aman jika kata kerja belum ada
+    return `Menghadiri kegiatan ${perihal}`;
 }
 
 /**
@@ -193,7 +206,10 @@ export async function drawHasilLayout(pdfDoc, data, person) {
 
     const lh1 = "Peraturan Bupati Tapin Nomor 01 Tahun 2024 tentang Perjalanan Dinas";
     const lh2 = "DPA SKPD Kecamatan Salam Babaris Tahun Anggaran 2026";
-    const lh3 = `Surat Dari ${data.suratDari || "-"} tanggal ${formatTanggal(data.tanggalSurat)} Perihal ${data.perihalSurat || "-"}`;
+    let lh3 = `Surat Dari ${data.suratDari || "-"} tanggal ${formatTanggal(data.tanggalSurat)} Perihal ${data.perihalSurat || "-"}`;
+    if (data.isinota || data.dari) {
+        lh3 = `Nota Dinas dari ${data.dari || "-"} tanggal ${formatTanggal(data.tanggalSurat || data.tanggal)} Perihal ${data.perihalSurat || "-"}`;
+    }
     const lh4 = `Surat Tugas Nomor : ${data.noSpt || "-"} Tanggal, ${formatTanggal(data.tanggal)}`;
     const lh5 = `Surat Perjalanan Dinas Nomor : ${data.noSpd || "-"} Tanggal, ${formatTanggal(data.tanggal)}`;
 

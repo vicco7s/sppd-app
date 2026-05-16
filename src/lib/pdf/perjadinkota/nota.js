@@ -127,35 +127,40 @@ export async function drawNotaLayout(pdfDoc, data, pegawaiUtama, pengikutList) {
     // ========== ISI NOTA DINAS ==========
     // ========== ISI NOTA DINAS ==========
     pdfDoc.setFont("helvetica", "normal");
-    pdfDoc.setFontSize(11); // Ukuran font sedikit lebih besar agar isi penuh
+    pdfDoc.setFontSize(11);
+    
     const isiText = data.isinota || "-";
     const paragraphs = isiText.split('\n');
 
     paragraphs.forEach(para => {
         const trimmed = para.trim();
         if (!trimmed) {
-            y += 6;
+            y += 4;
             return;
         }
-        // Kalimat pertama menjorok kedalam (indentasi)
-        const textToDraw = "            " + trimmed;
-        pdfDoc.text(textToDraw, marginLeft, y, { align: 'justify', maxWidth: contentWidth });
-        const lineCount = pdfDoc.splitTextToSize(textToDraw, contentWidth).length;
-        y += lineCount * 7.5; // Jarak antar baris lebih berjauhan
+        // Kalimat pertama menjorok kedalam (indentasi 5 spasi)
+        const textToDraw = "     " + trimmed;
+        const lines = pdfDoc.splitTextToSize(textToDraw, contentWidth);
+        
+        // Render per baris agar spacing rapi
+        lines.forEach((line) => {
+            pdfDoc.text(line, marginLeft, y, { align: 'justify', maxWidth: contentWidth });
+            y += 5.5; // Line spacing yang lebih standar dan rapi
+        });
+        
+        y += 2; // Jarak antar paragraf
     });
 
-    y += 2;
-
-    const dasarNotaStr = "            " + `Mendasari hal tersebut diatas maka kami bermaksud untuk mengajukan permohonan perjalanan dinas ${data.perihalSurat || "-"} ke ${data.tujuan || "-"}.`;
-    pdfDoc.text(dasarNotaStr, marginLeft, y, { align: 'justify', maxWidth: contentWidth });
-    const dasarLineCount = pdfDoc.splitTextToSize(dasarNotaStr, contentWidth).length;
-    y += dasarLineCount * 7.5 + 8;
+    y += 4;
 
     // ========== PENUTUP ==========
-    const penutup = "            " + "Demikian disampaikan, atas perhatian dan perkenan Bapak diucapkan terima kasih.";
-    pdfDoc.text(penutup, marginLeft, y, { align: 'justify', maxWidth: contentWidth });
-    const penutupLineCount = pdfDoc.splitTextToSize(penutup, contentWidth).length;
-    y += penutupLineCount * 7.5 + 8;
+    const penutup = "     " + "Demikian disampaikan, atas perhatian dan perkenan Bapak diucapkan terima kasih.";
+    const penutupLines = pdfDoc.splitTextToSize(penutup, contentWidth);
+    penutupLines.forEach((line) => {
+        pdfDoc.text(line, marginLeft, y, { align: 'justify', maxWidth: contentWidth });
+        y += 5.5;
+    });
+    y += 8;
 
     // ========== PENGIKUT SECTION ==========
     if (pengikutList.length > 0) {

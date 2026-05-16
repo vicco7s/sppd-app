@@ -250,7 +250,7 @@ export async function drawSPTLayout(pdfDoc, data, pegawaiUtama, pengikutList) {
     let untukText = data.untuk || "-";
     // Tambahkan info tanggal dan lokasi
     const hariText = formatHari(data.tanggalBerangkat);
-    untukText += `, pada hari ${hariText} tanggal ${formatTanggal(data.tanggalBerangkat)} waktu 09:00 WITA di ${data.tujuan || "-"} Kabupaten Tapin.`;
+    untukText += `, pada hari ${hariText} tanggal ${formatTanggal(data.tanggalBerangkat)} di ${data.tujuan || "-"} Kabupaten Tapin.`;
 
     const untukLines = pdfDoc.splitTextToSize(untukText, untukMaxWidth);
     pdfDoc.text(untukLines, untukIndent, y);

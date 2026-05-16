@@ -198,11 +198,43 @@ const PerjadinForm = ({ onSubmit, isSubmitting, initialData = null, pegawaiList 
             toast.error("Harap pilih minimal satu pegawai pelaksana (Pegawai Utama).");
             return;
         }
-        onSubmit(formData);
+        
+        // Auto-sync redundant fields when Nota Dinas is active
+        const finalData = { ...formData };
+        if (useNota) {
+            finalData.suratDari = finalData.tujuan;
+            if (!finalData.tanggalSurat) {
+                finalData.tanggalSurat = finalData.tanggal;
+            }
+        }
+        
+        onSubmit(finalData);
     };
 
     return (
         <form onSubmit={internalOnSubmit} className="p-6 space-y-6">
+            {/* AI Auto-Fill Section Prominently at the Top */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-5 mb-6 relative overflow-hidden">
+                <div className="absolute -right-10 -top-10 text-blue-200/50">
+                    <Sparkles size={120} />
+                </div>
+                <div className="relative z-10 space-y-4">
+                    <div>
+                        <h3 className="text-lg font-bold text-blue-900 flex items-center gap-2">
+                            <Sparkles size={20} className="text-blue-600" />
+                            Auto-Fill with AI
+                        </h3>
+                        <p className="text-sm text-blue-700 mt-1">
+                            Have an Invitation (PDF/Image)? Upload here to fill out the form automatically!
+                        </p>
+                    </div>
+                    <UploadSuratAI 
+                        onDataExtracted={handleAiData} 
+                        currentData={formData} 
+                        isNotaDinas={useNota} 
+                    />
+                </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Nomor</label>
@@ -215,7 +247,6 @@ const PerjadinForm = ({ onSubmit, isSubmitting, initialData = null, pegawaiList 
                         className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                     />
                 </div>
-
                 <div>
                     <div className="flex items-center justify-between mb-2">
                         <label className="block text-sm font-semibold text-gray-700">No. SPT</label>
@@ -280,44 +311,42 @@ const PerjadinForm = ({ onSubmit, isSubmitting, initialData = null, pegawaiList 
                 />
             </div>
 
-            <div className="space-y-2">
-                <UploadSuratAI 
-                    onDataExtracted={handleAiData} 
-                    currentData={formData} 
-                    isNotaDinas={useNota} 
-                />
-            </div>
 
             <div className="space-y-4 border border-gray-200 rounded-xl p-4 bg-white shadow-sm">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Dasar Surat</label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2 text-xs opacity-75">
-                            {useNota ? 'Detail Lokasi' : 'Surat Dari'}
-                        </label>
-                        <textarea
-                            name="suratDari"
-                            rows={4}
-                            value={formData.suratDari}
-                            onChange={handleChange}
-                            placeholder={useNota ? 'Ruang Akutansi BKAD' : 'BKAD Tapin Nomor...'}
-                            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                        />
-                    </div>
-                    <div className="space-y-4">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    {useNota ? 'Informasi Kegiatan' : 'Dasar Surat'}
+                </label>
+                <div className={`grid grid-cols-1 gap-4 ${useNota ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
+                    {!useNota && (
                         <div>
-                            <label className={`block text-sm font-semibold mb-2 text-xs opacity-75 ${useNota ? 'text-gray-400' : 'text-gray-700'}`}>
-                                Tanggal Surat {useNota && "(Dinonaktifkan karena Nota Dinas aktif)"}
+                            <label className="block text-sm font-semibold text-gray-700 mb-2 text-xs opacity-75">
+                                Surat Dari
                             </label>
-                            <input
-                                type="date"
-                                name="tanggalSurat"
-                                disabled={useNota}
-                                value={formData.tanggalSurat}
+                            <textarea
+                                name="suratDari"
+                                rows={4}
+                                value={formData.suratDari}
                                 onChange={handleChange}
-                                className={`w-full px-4 py-2.5 rounded-lg border border-gray-300 outline-none transition-all ${useNota ? 'bg-gray-100 cursor-not-allowed opacity-50' : 'focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}`}
+                                placeholder="BKAD Tapin Nomor..."
+                                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                             />
                         </div>
+                    )}
+                    <div className="space-y-4">
+                        {!useNota && (
+                            <div>
+                                <label className="block text-sm font-semibold mb-2 text-xs opacity-75 text-gray-700">
+                                    Tanggal Surat
+                                </label>
+                                <input
+                                    type="date"
+                                    name="tanggalSurat"
+                                    value={formData.tanggalSurat}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 outline-none transition-all focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+                        )}
                         <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-2 text-xs opacity-75">Tanggal Hasil</label>
                             <input
@@ -335,7 +364,7 @@ const PerjadinForm = ({ onSubmit, isSubmitting, initialData = null, pegawaiList 
                         <label className="block text-sm font-semibold text-gray-700 mb-2 text-xs opacity-75">Perihal</label>
                         <textarea
                             name="perihalSurat"
-                            rows={4}
+                            rows={useNota ? 3 : 4}
                             value={formData.perihalSurat}
                             onChange={handleChange}
                             placeholder="undangan rapat ...."

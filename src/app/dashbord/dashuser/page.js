@@ -1,25 +1,28 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Bell, ChevronDown, ChevronRight, LogOut, User, Edit, Trash2, Printer, Plus, ArrowUp, ArrowDown, FileText } from "lucide-react";
+import { ChevronRight, Edit, Trash2, Printer, Plus, ArrowUp, ArrowDown, FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/services/firebases";
-import { signOut, onAuthStateChanged } from "firebase/auth";
-import { collection, getDocs, deleteDoc, doc, query, orderBy, getDoc, onSnapshot, limit, serverTimestamp, addDoc, updateDoc } from "firebase/firestore";
+import { motion, AnimatePresence } from "framer-motion";
+import { onAuthStateChanged } from "firebase/auth";
+import { collection, getDocs, deleteDoc, doc, query, orderBy, getDoc,serverTimestamp, addDoc, updateDoc } from "firebase/firestore";
 import { toast } from "react-hot-toast";
 import { generateSPPD } from "@/lib/pdf/perjadinkota/page";
 import { generateNotaDinas } from "@/lib/pdf/perjadinkota/nota";
 import PegawaiModal from "@/components/PegawaiModal";
-import { useInactivityLogout, clearAuthCache } from "@/hooks/useInactivityLogout";
+import { useInactivityLogout } from "@/hooks/useInactivityLogout";
 import Topbar from "@/components/Topbar";
 import KwitansiSection from "@/components/KwitansiSection";
 import Pagination from "@/components/Pagination";
 import { deleteFile } from "@/lib/supabase/deleteFile";
 import { createSignedUrl } from "@/lib/supabase/createSignedUrl";
+import UserSidebar from "@/components/dashuser/UserSidebar";
+import UserPegawaiList from "@/components/dashuser/UserPegawaiList";
+import UserPerjadinKotaList from "@/components/dashuser/UserPerjadinKotaList";
 
 export default function DashuserPage() {
   useInactivityLogout(1800000); // 30 minutes auto logout
-  const [openPerjadin, setOpenPerjadin] = useState(false);
   const [openPerjadinLuar, setOpenPerjadinLuar] = useState(false);
   const [activeTab, setActiveTab] = useState("overview"); // State to manage active content in main area
   const router = useRouter();
@@ -284,70 +287,10 @@ export default function DashuserPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex">
-      {/* Sidebar - Sticky for fixed height alignment */}
-      <aside className="w-64 bg-white shadow-lg h-screen sticky top-0 p-4 text-gray-800 flex flex-col shrink-0">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-full" />
-          <div>
-            <div className="font-bold text-gray-900">Dashboard</div>
-            <div className="text-sm text-gray-500">User</div>
-          </div>
-        </div>
-
-        <nav className="space-y-3 text-sm mb-4">
-          <button
-            onClick={() => setActiveTab("overview")}
-            className={`w-full text-left flex items-center gap-3 p-2 rounded hover:bg-gray-100 ${activeTab === 'overview' ? 'bg-gray-100 font-semibold' : 'text-gray-800'}`}
-          >
-            Overview
-          </button>
-
-          <button
-            onClick={() => setActiveTab("kwitansi")}
-            className={`w-full text-left flex items-center gap-3 p-2 rounded hover:bg-gray-100 ${activeTab === 'kwitansi' ? 'bg-gray-100 font-semibold' : 'text-gray-800'}`}
-          >
-            Kwitansi
-          </button>
-
-          <button
-            onClick={() => setActiveTab("pegawai")}
-            className={`w-full text-left flex items-center gap-3 p-2 rounded hover:bg-gray-100 ${activeTab === 'pegawai' ? 'bg-gray-100 font-semibold' : 'text-gray-800'}`}
-          >
-            Pegawai
-          </button>
-
-          <button
-            onClick={() => setActiveTab("perjadin-umum-dalam-kota")}
-            className={`w-full text-left flex items-center gap-3 p-2 rounded hover:bg-gray-100 ${activeTab === 'perjadin-umum-dalam-kota' ? 'bg-gray-100 font-semibold' : 'text-gray-800'}`}
-          >
-            Perjadin Dalam Kota
-          </button>
-
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setOpenPerjadinLuar(!openPerjadinLuar)}
-              aria-expanded={openPerjadinLuar}
-              className="w-full text-left flex items-center justify-between gap-3 p-2 rounded hover:bg-gray-100 text-gray-900 focus:outline-none focus:ring-0"
-            >
-              <span>Perjadin Luar Kota</span>
-              <span className="text-sm">{openPerjadinLuar ? <ChevronDown size={18} /> : <ChevronRight size={18} />}</span>
-            </button>
-
-            {openPerjadinLuar && (
-              <ul className="mt-2 bg-white border border-transparent rounded shadow-sm">
-                <li onClick={() => toast.success("Coming Soon!")} className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm focus:outline-none">Perjadin Luar Dalam Provinsi</li>
-                <li onClick={() => toast.success("Coming Soon!")} className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm focus:outline-none">Perjadin Luar Antar Provinsi</li>
-              </ul>
-            )}
-          </div>
-        </nav>
-
-        <div className="mt-auto pt-6 border-t border-gray-100 -mx-4 px-4">
-          <a className="block w-full text-left flex items-center gap-3 p-2 rounded hover:bg-gray-100 text-sm text-gray-700">Settings</a>
-          <a className="block w-full text-left flex items-center gap-3 p-2 rounded hover:bg-gray-100 text-sm text-gray-700">Help & Support</a>
-        </div>
-      </aside>
+      <UserSidebar 
+        activeTab={activeTab} setActiveTab={setActiveTab}
+        openPerjadinLuar={openPerjadinLuar} setOpenPerjadinLuar={setOpenPerjadinLuar}
+      />
 
       {/* Main area */}
       <div className="flex-1 flex flex-col min-h-screen relative">
@@ -370,293 +313,83 @@ export default function DashuserPage() {
 
             {/* Content for "Pegawai" */}
             {activeTab === "pegawai" && (
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-gray-800 flex-1 flex flex-col min-h-[calc(100vh-180px)]">
-                <div className="flex justify-between items-center mb-6 border-b border-gray-50 pb-4">
-                  <h2 className="text-xl font-bold text-gray-900">List Data Pegawai</h2>
-                  <button
-                    onClick={() => {
-                      setSelectedPegawai(null);
-                      setIsModalOpen(true);
-                    }}
-                    className="relative group overflow-hidden inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 bg-gradient-to-br from-blue-600/90 to-blue-700/90 backdrop-blur-lg border border-white/20 shadow-lg shadow-blue-500/30 text-white hover:shadow-blue-500/50 hover:scale-[1.02] active:scale-95 active:shadow-inner"
-                  >
-                    {/* Water wave effect on hover */}
-                    <div className="absolute inset-0 overflow-hidden opacity-0 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none">
-                      <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-white rounded-[38%] animate-wave" />
-                    </div>
-                    <span className="absolute inset-0 w-full h-full bg-gradient-to-tr from-white/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    <Plus size={18} className="relative z-10 transition-transform duration-500 group-hover:rotate-180" />
-                    <span className="relative z-10">Tambah Pegawai Baru</span>
-                    {/* Click Ripple effect */}
-                    <span className="absolute inset-0 rounded-xl bg-white/30 scale-0 transition-transform duration-500 group-active:scale-[2.5] opacity-0 group-active:opacity-100 pointer-events-none" />
-                  </button>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th 
-                          className="px-4 py-3 border-b text-sm font-semibold text-gray-600 cursor-pointer hover:bg-gray-100 transition-colors group"
-                          onClick={toggleSort}
-                        >
-                          <div className="flex items-center gap-1">
-                            No
-                            {sortOrder === "desc" ? <ArrowDown size={14} className="text-blue-500" /> : <ArrowUp size={14} className="text-blue-500" />}
-                          </div>
-                        </th>
-                        <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">NIP</th>
-                        <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Nama</th>
-                        <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Jabatan</th>
-                        <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Pangkat</th>
-                        <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Rekening</th>
-                        <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600 text-center">Aksi</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {loading ? (
-                        <tr>
-                          <td colSpan="7" className="px-4 py-10 text-center text-gray-500 italic border-b">
-                            Memuat data pegawai...
-                          </td>
-                        </tr>
-                      ) : pegawaiList.length === 0 ? (
-                        <tr>
-                          <td colSpan="7" className="px-4 py-10 text-center text-gray-500 italic border-b">
-                            Belum ada data pegawai. Silahkan tambah data baru.
-                          </td>
-                        </tr>
-                      ) : (
-                        paginatedData.map((item, index) => (
-                          <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-4 py-3 border-b text-sm text-gray-700">
-                              {sortOrder === "desc" ? currentList.length - (startIndex + index) : startIndex + index + 1}
-                            </td>
-                            <td className="px-4 py-3 border-b text-sm text-gray-700">{item.nip}</td>
-                            <td className="px-4 py-3 border-b text-sm text-gray-700">{item.nama}</td>
-                            <td className="px-4 py-3 border-b text-sm text-gray-700">{item.jabatan}</td>
-                            <td className="px-4 py-3 border-b text-sm text-gray-700">{item.pangkat}</td>
-                            <td className="px-4 py-3 border-b text-sm text-gray-700">{item.rek}</td>
-                            <td className="px-4 py-3 border-b text-sm text-center">
-                              <div className="flex items-center justify-center gap-2">
-                                <button
-                                  onClick={() => {
-                                    setSelectedPegawai(item);
-                                    setIsModalOpen(true);
-                                  }}
-                                  className="inline-flex items-center justify-center rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-700 transition"
-                                  title="Edit"
-                                >
-                                  <Edit size={16} />
-                                </button>
-                                <button
-                                  onClick={() => handleDelete(item.id, "pegawai")}
-                                  className="inline-flex items-center justify-center rounded-lg bg-red-500 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 transition"
-                                  title="Hapus"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Pagination Controls */}
-                {!loading && (
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                    itemsPerPage={itemsPerPage}
-                    totalItems={currentList.length}
-                    startIndex={startIndex}
-                  />
-                )}
-              </div>
+              <UserPegawaiList 
+                loading={loading}
+                pegawaiList={pegawaiList}
+                currentList={currentList}
+                paginatedData={paginatedData}
+                sortOrder={sortOrder}
+                toggleSort={toggleSort}
+                startIndex={startIndex}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                setCurrentPage={setCurrentPage}
+                itemsPerPage={itemsPerPage}
+                setSelectedPegawai={setSelectedPegawai}
+                setIsModalOpen={setIsModalOpen}
+                handleDelete={handleDelete}
+              />
             )}
 
             {activeTab === "perjadin-umum-dalam-kota" && (
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-gray-800 flex-1 flex flex-col min-h-[calc(100vh-180px)]">
-                <div className="flex justify-between items-center mb-6 border-b border-gray-50 pb-4">
-                  <h2 className="text-xl font-bold text-gray-900">List Data Perjadin Umum Dalam Kota</h2>
-                  <button
-                    onClick={() => router.push("/dashbord/dashuser/Perjadin/create")}
-                    className="relative group overflow-hidden inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 bg-gradient-to-br from-blue-600/90 to-blue-700/90 backdrop-blur-lg border border-white/20 shadow-lg shadow-blue-500/30 text-white hover:shadow-blue-500/50 hover:scale-[1.02] active:scale-95 active:shadow-inner"
-                  >
-                    {/* Water wave effect on hover */}
-                    <div className="absolute inset-0 overflow-hidden opacity-0 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none">
-                      <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-white rounded-[38%] animate-wave" />
-                    </div>
-                    <span className="absolute inset-0 w-full h-full bg-gradient-to-tr from-white/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    <Plus size={18} className="relative z-10 transition-transform duration-500 group-hover:rotate-180" />
-                    <span className="relative z-10">Tambah Perjadin Baru</span>
-                    {/* Click Ripple effect */}
-                    <span className="absolute inset-0 rounded-xl bg-white/30 scale-0 transition-transform duration-500 group-active:scale-[2.5] opacity-0 group-active:opacity-100 pointer-events-none" />
-                  </button>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th 
-                          className="px-4 py-3 border-b text-sm font-semibold text-gray-600 cursor-pointer hover:bg-gray-100 transition-colors group"
-                          onClick={toggleSort}
-                        >
-                          <div className="flex items-center gap-1">
-                            No
-                            {sortOrder === "desc" ? <ArrowDown size={14} className="text-blue-500" /> : <ArrowUp size={14} className="text-blue-500" />}
-                          </div>
-                        </th>
-                        <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">No SPT</th>
-                        <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Tujuan</th>
-                        <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Tanggal</th>
-                        <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Keperluan</th>
-                        <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600">Status</th>
-                        <th className="px-4 py-3 border-b text-sm font-semibold text-gray-600 text-center">Aksi</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {loading ? (
-                        <tr>
-                          <td colSpan="7" className="px-4 py-10 text-center text-gray-500 italic border-b">
-                            Memuat data...
-                          </td>
-                        </tr>
-                      ) : perjadinList.length === 0 ? (
-                        <tr>
-                          <td colSpan="7" className="px-4 py-10 text-center text-gray-500 italic border-b">
-                            Belum ada data perjadin. Silahkan tambah data baru.
-                          </td>
-                        </tr>
-                      ) : (
-                        paginatedData.map((item, index) => (
-                          <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-4 py-3 border-b text-sm text-gray-700">
-                              {sortOrder === "desc" ? currentList.length - (startIndex + index) : startIndex + index + 1}
-                            </td>
-                            <td className="px-4 py-3 border-b text-sm text-gray-700">{item.noSpt}</td>
-                            <td className="px-4 py-3 border-b text-sm text-gray-700">{item.tujuan}</td>
-                            <td className="px-4 py-3 border-b text-sm text-gray-700">{item.tanggalBerangkat}</td>
-                            <td className="px-4 py-3 border-b text-sm text-gray-700">{item.perihalSurat}</td>
-                            <td className="px-4 py-3 border-b text-sm">
-                              <span className={`text-xs px-2 py-1 rounded-full font-medium ${item.status === 'Selesai'
-                                ? 'bg-green-100 text-green-800'
-                                : item.status === 'Ditolak'
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-yellow-100 text-yellow-800'
-                                }`}>
-                                {item.status || 'Menunggu'}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 border-b text-sm text-center">
-                              <div className="flex items-center justify-center gap-2">
-                                {item.suratPath && (
-                                  <button
-                                    onClick={() => handleViewFile(item.suratPath)}
-                                    className="inline-flex items-center justify-center rounded-lg bg-indigo-500 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700 transition"
-                                    title="Lihat Dokumen (Secure)"
-                                  >
-                                    <FileText size={16} />
-                                  </button>
-                                )}
-                                {(!item.status || item.status === 'Menunggu') ? (
-                                  <button
-                                    onClick={() => router.push(`/dashbord/dashuser/Perjadin/edit/${item.id}`)}
-                                    className="inline-flex items-center justify-center rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-700 transition"
-                                    title="Edit"
-                                  >
-                                    <Edit size={16} />
-                                  </button>
-                                ) : (
-                                  <div className="text-gray-300 p-1 cursor-not-allowed" title="Data sudah diproses, tidak bisa diedit">
-                                    <Edit size={16} className="opacity-50" />
-                                  </div>
-                                )}
-                                <div className="relative">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setPrintModalItem(item);
-                                    }}
-                                    className="inline-flex items-center justify-center rounded-lg bg-green-500 px-3 py-2 text-xs font-semibold text-white hover:bg-green-700 transition"
-                                    title="Print"
-                                  >
-                                    <Printer size={16} />
-                                  </button>
-                                </div>
-                                <button
-                                  onClick={() => handleDelete(item.id)}
-                                  className="inline-flex items-center justify-center rounded-lg bg-red-500 px-3 py-2 text-xs font-semibold text-white hover:bg-red-700 transition"
-                                  title="Hapus"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-
-                {printModalItem && (
-                  <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-                    onClick={() => setPrintModalItem(null)}
-                  >
-                    <div
-                      className="bg-white rounded-xl shadow-xl max-w-sm w-full"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex items-center justify-between px-4 py-3 border-b">
-                        <h3 className="text-sm font-semibold text-gray-800">Opsi Cetak</h3>
-                        <button
-                          onClick={() => setPrintModalItem(null)}
-                          className="text-gray-500 hover:text-gray-700"
-                          aria-label="Tutup"
-                        >
-                          ×
-                        </button>
-                      </div>
-                      <div className="p-4 space-y-2">
-                        {(printModalItem.isinota || printModalItem.dari) && (
-                          <button
-                            onClick={() => handlePrint(printModalItem, 'nota')}
-                            className="w-full text-left px-3 py-2.5 text-xs font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-lg transition-all flex items-center gap-3"
-                          >
-                            <div className="w-2 h-2 rounded-full bg-green-500" />
-                            <span>Print Nota Dinas</span>
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handlePrint(printModalItem, 'spj')}
-                          className="w-full text-left px-3 py-2.5 text-xs font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-all flex items-center gap-3"
-                        >
-                          <div className="w-2 h-2 rounded-full bg-blue-500" />
-                          <span>Print SPJ Perjadin</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Pagination Controls */}
-                {!loading && (
-                  <Pagination
+              <div className="flex-1 flex flex-col min-h-[calc(100vh-180px)] space-y-6">
+                  <UserPerjadinKotaList 
+                    loading={loading}
+                    perjadinList={perjadinList}
+                    currentList={currentList}
+                    paginatedData={paginatedData}
+                    sortOrder={sortOrder}
+                    toggleSort={toggleSort}
+                    startIndex={startIndex}
                     currentPage={currentPage}
                     totalPages={totalPages}
-                    onPageChange={setCurrentPage}
+                    setCurrentPage={setCurrentPage}
                     itemsPerPage={itemsPerPage}
-                    totalItems={perjadinList.length}
-                    startIndex={startIndex}
+                    handleViewFile={handleViewFile}
+                    router={router}
+                    setPrintModalItem={setPrintModalItem}
+                    handleDelete={handleDelete}
                   />
-                )}
+                  {printModalItem && (
+                    <div
+                      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+                      onClick={() => setPrintModalItem(null)}
+                    >
+                      <div
+                        className="bg-white rounded-xl shadow-xl max-w-sm w-full"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex items-center justify-between px-4 py-3 border-b">
+                          <h3 className="text-sm font-semibold text-gray-800">Opsi Cetak</h3>
+                          <button
+                            onClick={() => setPrintModalItem(null)}
+                            className="text-gray-500 hover:text-gray-700"
+                            aria-label="Tutup"
+                          >
+                            ×
+                          </button>
+                        </div>
+                        <div className="p-4 space-y-2">
+                          {(printModalItem.isinota || printModalItem.dari) && (
+                            <button
+                              onClick={() => handlePrint(printModalItem, 'nota')}
+                              className="w-full text-left px-3 py-2.5 text-xs font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-lg transition-all flex items-center gap-3"
+                            >
+                              <div className="w-2 h-2 rounded-full bg-green-500" />
+                              <span>Print Nota Dinas</span>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handlePrint(printModalItem, 'spj')}
+                            className="w-full text-left px-3 py-2.5 text-xs font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded-lg transition-all flex items-center gap-3"
+                          >
+                            <div className="w-2 h-2 rounded-full bg-blue-500" />
+                            <span>Print SPJ Perjadin</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
               </div>
             )}
           </div>
