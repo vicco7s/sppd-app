@@ -6,27 +6,34 @@ import {
   Mail, 
   Lock, 
   Shield, 
-  User, 
+  User as UserIcon, 
   CheckCircle2, 
   AlertCircle,
   Briefcase,
   IdCard,
   Loader2
 } from "lucide-react";
-import { db, secondaryAuth } from "@/services/firebases";
+import { db, auth, secondaryAuth } from "@/services/firebases";
 import { 
   doc, 
   setDoc, 
   updateDoc, 
   serverTimestamp,
   addDoc,
-  collection,
-  getDoc
+  collection
 } from "firebase/firestore";
 import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { toast } from "react-hot-toast";
+import { User, Pegawai } from "@/types";
 
-export default function UserModal({ isOpen, onClose, selectedUser, pegawaiList }) {
+interface UserModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  selectedUser: User | null;
+  pegawaiList: Pegawai[];
+}
+
+export default function UserModal({ isOpen, onClose, selectedUser, pegawaiList }: UserModalProps) {
   const isEdit = !!selectedUser;
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -37,10 +44,10 @@ export default function UserModal({ isOpen, onClose, selectedUser, pegawaiList }
     idPegawai: ""
   });
 
-  const [selectedPegawaiData, setSelectedPegawaiData] = useState(null);
+  const [selectedPegawaiData, setSelectedPegawaiData] = useState<Pegawai | null>(null);
 
   useEffect(() => {
-    if (isEdit) {
+    if (isEdit && selectedUser) {
       setFormData({
         email: selectedUser.email,
         password: "",
@@ -48,7 +55,7 @@ export default function UserModal({ isOpen, onClose, selectedUser, pegawaiList }
         role: selectedUser.role,
         idPegawai: selectedUser.idPegawai
       });
-      const p = pegawaiList.find(p => p.id === selectedUser.idPegawai);
+      const p = pegawaiList.find(p => p.id === selectedUser.idPegawai) || null;
       setSelectedPegawaiData(p);
     } else {
       setFormData({
@@ -62,14 +69,14 @@ export default function UserModal({ isOpen, onClose, selectedUser, pegawaiList }
     }
   }, [selectedUser, isEdit, pegawaiList]);
 
-  const handlePegawaiChange = (e) => {
+  const handlePegawaiChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value;
     setFormData({ ...formData, idPegawai: id });
-    const p = pegawaiList.find(p => p.id === id);
+    const p = pegawaiList.find(p => p.id === id) || null;
     setSelectedPegawaiData(p);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     // Validasi
@@ -91,7 +98,7 @@ export default function UserModal({ isOpen, onClose, selectedUser, pegawaiList }
 
     setLoading(true);
     try {
-      if (isEdit) {
+      if (isEdit && selectedUser) {
         // Update Role & Pegawai in Firestore
         await updateDoc(doc(db, "user", selectedUser.id), {
           role: formData.role,
@@ -127,6 +134,7 @@ export default function UserModal({ isOpen, onClose, selectedUser, pegawaiList }
           role: formData.role,
           idPegawai: formData.idPegawai,
           status: "active",
+          createdAt: serverTimestamp(),
         });
 
         // Create Notification
@@ -147,7 +155,7 @@ export default function UserModal({ isOpen, onClose, selectedUser, pegawaiList }
         toast.success("User baru berhasil dibuat");
       }
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving user:", error);
       if (error.code === "auth/email-already-in-use") {
         toast.error("Email sudah terdaftar");
@@ -276,7 +284,7 @@ export default function UserModal({ isOpen, onClose, selectedUser, pegawaiList }
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500 ml-1">Pilih Pegawai</label>
                   <div className="relative">
-                    <User className="absolute left-3 top-3 text-gray-400" size={18} />
+                    <UserIcon className="absolute left-3 top-3 text-gray-400" size={18} />
                     <select 
                       value={formData.idPegawai}
                       onChange={handlePegawaiChange}

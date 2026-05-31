@@ -404,8 +404,8 @@ export async function drawSPDLayout(pdfDoc, data, pegawaiUtama, pengikutList) {
 
     pdfDoc.rect(xValue, y, colValue, row9H);
     pdfDoc.setFont("helvetica", "bold");
-    pdfDoc.text("a. Kantor Kecamatan Salam Babaris", xValue + 2, y + 9);
-    pdfDoc.text("b. DPA-SKPD 2026", xValue + 2, y + 14);
+    pdfDoc.text("a. Kecamatan Salam Babaris", xValue + 2, y + 9);
+    pdfDoc.text("b. 5.1.02.04.01.0003", xValue + 2, y + 14);
     y += row9H;
 
     // ---- Row 10: Keterangan lain-lain ----

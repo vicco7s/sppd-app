@@ -3,13 +3,12 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/services/firebases";
-import { onAuthStateChanged } from "firebase/auth";
-import { collection, getDocs, deleteDoc, doc, query, orderBy, addDoc, serverTimestamp} from "firebase/firestore";
+import { onAuthStateChanged, User as AuthUser } from "firebase/auth";
+import { collection, getDocs, deleteDoc, doc, query, orderBy, addDoc, serverTimestamp, updateDoc, getDoc } from "firebase/firestore";
 import { toast } from "react-hot-toast";
 import { generateSPPD } from "@/lib/pdf/perjadinkota/page";
 import { generateNotaDinas } from "@/lib/pdf/perjadinkota/nota";
 import PegawaiModal from "@/components/PegawaiModal";
-import { updateDoc, getDoc } from "firebase/firestore";
 import { useInactivityLogout } from "@/hooks/useInactivityLogout";
 import Topbar from "@/components/Topbar";
 import KwitansiSection from "@/components/KwitansiSection";
@@ -20,6 +19,7 @@ import { createSignedUrl } from "@/lib/supabase/createSignedUrl";
 import AdminSidebar from "@/components/dashadmin/AdminSidebar";
 import PegawaiList from "@/components/dashadmin/PegawaiList";
 import PerjadinKotaList from "@/components/dashadmin/PerjadinKotaList";
+import { Pegawai, User as DbUser } from "@/types";
 
 export default function DashadminPage() {
     useInactivityLogout(1800000); // 30 minutes auto logout
@@ -28,20 +28,20 @@ export default function DashadminPage() {
     const [openPerjadinLuar, setOpenPerjadinLuar] = useState(false);
     const [activeTab, setActiveTab] = useState("overview"); // State to manage active content in main area
     const router = useRouter();
-    const [user, setUser] = useState(null);
-    const [perjadinList, setPerjadinList] = useState([]);
-    const [pegawaiList, setPegawaiList] = useState([]);
+    const [user, setUser] = useState<AuthUser | null>(null);
+    const [perjadinList, setPerjadinList] = useState<any[]>([]);
+    const [pegawaiList, setPegawaiList] = useState<Pegawai[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [sortOrder, setSortOrder] = useState("desc");
     const itemsPerPage = 10;
-    const [printModalItem, setPrintModalItem] = useState(null);
-    const [userProfile, setUserProfile] = useState(null);
+    const [printModalItem, setPrintModalItem] = useState<any | null>(null);
+    const [userProfile, setUserProfile] = useState<any | null>(null);
 
     // Modal State for Pegawai
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
-    const [selectedPegawai, setSelectedPegawai] = useState(null); // null means "Add", object means "Edit"
+    const [selectedPegawai, setSelectedPegawai] = useState<Pegawai | null>(null); // null means "Add", object means "Edit"
 
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, async (u) => {
@@ -51,7 +51,16 @@ export default function DashadminPage() {
                 try {
                     const userDoc = await getDoc(doc(db, "user", u.uid));
                     if (userDoc.exists()) {
-                        const userData = userDoc.data();
+                        const userData = userDoc.data() as DbUser;
+                        
+                        // Cek jika akun dinonaktifkan
+                        if (userData.status === "inactive") {
+                            await auth.signOut();
+                            toast.error("Akun Anda telah dinonaktifkan. Silakan hubungi admin.");
+                            router.replace("/login");
+                            return;
+                        }
+
                         const role = userData.role;
                         if (role !== "admin") {
                             router.replace("/dashbord/dashuser");
@@ -81,7 +90,7 @@ export default function DashadminPage() {
             }
         });
         return () => unsubscribeAuth();
-    }, []);
+    }, [router]);
 
     // Fetch Data (Perjadin or Pegawai)
     useEffect(() => {
@@ -102,7 +111,7 @@ export default function DashadminPage() {
                     const data = querySnapshot.docs.map(doc => ({
                         id: doc.id,
                         ...doc.data()
-                    }));
+                    } as Pegawai));
                     setPegawaiList(data);
                 }
             } catch (error) {
@@ -122,7 +131,7 @@ export default function DashadminPage() {
         setSortOrder("desc");
     }, [activeTab]);
 
-    const handleDelete = async (id, type = "perjadinkota") => {
+    const handleDelete = async (id: string, type: string = "perjadinkota") => {
         if (window.confirm("Apakah Anda yakin ingin menghapus data ini?")) {
             try {
                 // Jika menghapus perjadin, cek apakah ada file Supabase yang perlu dihapus
@@ -155,7 +164,7 @@ export default function DashadminPage() {
         }
     };
 
-    const handlePrint = async (item, type = 'spj') => {
+    const handlePrint = async (item: any, type: string = 'spj') => {
         try {
             if (type === 'nota') {
                 if (!item.dari && !item.isinota) {
@@ -181,7 +190,7 @@ export default function DashadminPage() {
         }
     };
 
-    const handleViewFile = async (path) => {
+    const handleViewFile = async (path: string) => {
         if (!path) return;
         try {
             const url = await createSignedUrl(path);
@@ -196,7 +205,7 @@ export default function DashadminPage() {
         }
     };
 
-    const handleSavePegawai = async (formData) => {
+    const handleSavePegawai = async (formData: any) => {
         setIsSaving(true);
         try {
             const dataToStore = {
@@ -249,7 +258,7 @@ export default function DashadminPage() {
                     console.error("Failed to create notification:", notifErr);
                 }
 
-                setPegawaiList(prev => [{ id: docRef.id, ...formData, tgllahir: dataToStore.tgllahir }, ...prev]);
+                setPegawaiList(prev => [{ id: docRef.id, ...formData, tgllahir: dataToStore.tgllahir } as Pegawai, ...prev]);
                 toast.success("Pegawai berhasil ditambahkan");
             }
 
@@ -263,8 +272,7 @@ export default function DashadminPage() {
         }
     };
 
-    {/* Fungsi untuk mengubah status */ }
-    const handleStatusChange = async (itemId, newStatus) => {
+    const handleStatusChange = async (itemId: string, newStatus: string) => {
         try {
             await updateDoc(doc(db, "perjadinkota", itemId), {
                 status: newStatus
@@ -301,7 +309,6 @@ export default function DashadminPage() {
         }
     };
 
-
     // Pagination & Sort logic
     const currentList = activeTab === "pegawai" ? pegawaiList : perjadinList;
     const sortedData = sortOrder === "asc" ? [...currentList].reverse() : currentList;
@@ -314,10 +321,6 @@ export default function DashadminPage() {
     const toggleSort = () => {
         setSortOrder(sortOrder === "desc" ? "asc" : "desc");
         setCurrentPage(1);
-    };
-
-    const handlePageChange = (page) => {
-        setCurrentPage(page);
     };
 
     return (
@@ -373,8 +376,6 @@ export default function DashadminPage() {
                                 handleDelete={handleDelete}
                             />
                         )}
-
-
 
                         {/* Content for "Perjadin Umum Dalam Kota" */}
                         {activeTab === "perjadin-umum-dalam-kota" && (

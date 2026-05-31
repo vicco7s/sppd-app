@@ -5,7 +5,7 @@ import { Eye, EyeOff } from "lucide-react";
 import LoginInput from "./LoginInput";
 import LoginButton from "./LoginButton";
 
-export default function LoginForm({ onSubmit, loading, onForgotPassword }) {
+export default function LoginForm({ onSubmit, loading, onForgotPassword, error }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
@@ -46,6 +46,12 @@ export default function LoginForm({ onSubmit, loading, onForgotPassword }) {
           </button>
         }
       />
+
+      {error && (
+        <div className="p-3 bg-red-50 text-red-600 rounded-xl text-xs font-semibold border border-red-100">
+          {error}
+        </div>
+      )}
 
       <div className="pt-2">
         <LoginButton loading={loading}>

@@ -80,7 +80,7 @@ export async function generateKwitansiPDF(data) {
     y = drawHeaderRow("Nama Rekening", data.namaRekeningBelanja, y);
 
     // No. BKU at the top right
-    pdfDoc.text(`No. BKU : .................../CSB/2026`, pageWidth - marginRight - 50, 15);
+    pdfDoc.text(`No. BKU : .................../CSB/2026`, pageWidth - marginRight - 50, 10);
 
     y += 5;
     // Double line separator

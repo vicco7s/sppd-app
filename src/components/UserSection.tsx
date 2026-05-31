@@ -30,13 +30,14 @@ import { toast } from "react-hot-toast";
 import UserModal from "./UserModal";
 import Pagination from "./Pagination";
 import { sendPasswordResetEmail } from "firebase/auth";
+import { User, Pegawai } from "@/types";
 
 export default function UserSection() {
-  const [users, setUsers] = useState([]);
-  const [pegawaiList, setPegawaiList] = useState([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [pegawaiList, setPegawaiList] = useState<Pegawai[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -47,19 +48,28 @@ export default function UserSection() {
     const fetchPegawai = async () => {
       const q = query(collection(db, "pegawai"), orderBy("nama", "asc"));
       const snap = await getDocs(q);
-      const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Pegawai));
       setPegawaiList(list);
     };
 
     fetchPegawai();
 
     // Listen to users collection
-    const q = query(collection(db, "user"), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "user"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const userList = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      } as User));
+      
+      // Urutkan secara client-side berdasarkan createdAt (desc)
+      // agar data user lama yang tidak memiliki createdAt tetap muncul
+      userList.sort((a, b) => {
+        const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+        const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+        return timeB - timeA;
+      });
+
       setUsers(userList);
       setLoading(false);
     }, (error) => {
@@ -71,7 +81,7 @@ export default function UserSection() {
     return () => unsubscribe();
   }, []);
 
-  const handleDeleteUser = async (id) => {
+  const handleDeleteUser = async (id: string) => {
     if (window.confirm("Apakah Anda yakin ingin menghapus user ini? Catatan: Akun Auth user tidak akan terhapus secara otomatis dari client-side, hanya data Firestore yang dihapus.")) {
       try {
         // Get target user info for notification message
@@ -100,7 +110,7 @@ export default function UserSection() {
     }
   };
 
-  const handleResetPassword = async (email) => {
+  const handleResetPassword = async (email: string) => {
     try {
       await sendPasswordResetEmail(auth, email);
       toast.success(`Email reset password telah dikirim ke ${email}`);
@@ -110,7 +120,7 @@ export default function UserSection() {
     }
   };
 
-  const handleToggleStatus = async (user) => {
+  const handleToggleStatus = async (user: User) => {
     const newStatus = user.status === "active" ? "inactive" : "active";
     try {
       await updateDoc(doc(db, "user", user.id), { status: newStatus });
@@ -135,7 +145,7 @@ export default function UserSection() {
   };
 
   // Logic to get pegawai name by idPegawai
-  const getPegawaiName = (idPegawai) => {
+  const getPegawaiName = (idPegawai: string) => {
     const p = pegawaiList.find(p => p.id === idPegawai);
     return p ? p.nama : "Tidak Terhubung";
   };
@@ -182,7 +192,7 @@ export default function UserSection() {
           <tbody className="divide-y divide-gray-100">
             {loading ? (
               <tr>
-                <td colSpan="6" className="px-4 py-12 text-center text-gray-400 italic">
+                <td colSpan={6} className="px-4 py-12 text-center text-gray-400 italic">
                   <div className="flex flex-col items-center gap-2">
                     <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
                     Memuat data user...
@@ -191,7 +201,7 @@ export default function UserSection() {
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan="6" className="px-4 py-12 text-center text-gray-400 italic">
+                <td colSpan={6} className="px-4 py-12 text-center text-gray-400 italic">
                   Belum ada data user.
                 </td>
               </tr>

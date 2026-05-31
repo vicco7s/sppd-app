@@ -1,12 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ChevronRight, Edit, Trash2, Printer, Plus, ArrowUp, ArrowDown, FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/services/firebases";
-import { motion, AnimatePresence } from "framer-motion";
-import { onAuthStateChanged } from "firebase/auth";
-import { collection, getDocs, deleteDoc, doc, query, orderBy, getDoc,serverTimestamp, addDoc, updateDoc } from "firebase/firestore";
+import { onAuthStateChanged, User as AuthUser } from "firebase/auth";
+import { collection, getDocs, deleteDoc, doc, query, orderBy, getDoc, serverTimestamp, addDoc, updateDoc } from "firebase/firestore";
 import { toast } from "react-hot-toast";
 import { generateSPPD } from "@/lib/pdf/perjadinkota/page";
 import { generateNotaDinas } from "@/lib/pdf/perjadinkota/nota";
@@ -14,32 +12,32 @@ import PegawaiModal from "@/components/PegawaiModal";
 import { useInactivityLogout } from "@/hooks/useInactivityLogout";
 import Topbar from "@/components/Topbar";
 import KwitansiSection from "@/components/KwitansiSection";
-import Pagination from "@/components/Pagination";
 import { deleteFile } from "@/lib/supabase/deleteFile";
 import { createSignedUrl } from "@/lib/supabase/createSignedUrl";
 import UserSidebar from "@/components/dashuser/UserSidebar";
 import UserPegawaiList from "@/components/dashuser/UserPegawaiList";
 import UserPerjadinKotaList from "@/components/dashuser/UserPerjadinKotaList";
+import { Pegawai, User as DbUser } from "@/types";
 
 export default function DashuserPage() {
   useInactivityLogout(1800000); // 30 minutes auto logout
   const [openPerjadinLuar, setOpenPerjadinLuar] = useState(false);
   const [activeTab, setActiveTab] = useState("overview"); // State to manage active content in main area
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [perjadinList, setPerjadinList] = useState([]);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [perjadinList, setPerjadinList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortOrder, setSortOrder] = useState("desc");
   const itemsPerPage = 10;
-  const [printModalItem, setPrintModalItem] = useState(null);
-  const [pegawaiList, setPegawaiList] = useState([]);
-  const [userProfile, setUserProfile] = useState(null);
+  const [printModalItem, setPrintModalItem] = useState<any | null>(null);
+  const [pegawaiList, setPegawaiList] = useState<Pegawai[]>([]);
+  const [userProfile, setUserProfile] = useState<any | null>(null);
 
   // Modal State for Pegawai
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [selectedPegawai, setSelectedPegawai] = useState(null);
+  const [selectedPegawai, setSelectedPegawai] = useState<Pegawai | null>(null);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (u) => {
@@ -49,7 +47,16 @@ export default function DashuserPage() {
         try {
           const userDoc = await getDoc(doc(db, "user", u.uid));
           if (userDoc.exists()) {
-            const userData = userDoc.data();
+            const userData = userDoc.data() as DbUser;
+
+            // Cek jika akun dinonaktifkan
+            if (userData.status === "inactive") {
+              await auth.signOut();
+              toast.error("Akun Anda telah dinonaktifkan. Silakan hubungi admin.");
+              router.replace("/login");
+              return;
+            }
+
             const role = userData.role;
             if (role === "admin") {
               router.replace("/dashbord/dashadmin");
@@ -76,7 +83,7 @@ export default function DashuserPage() {
       }
     });
     return () => unsubscribeAuth();
-  }, []);
+  }, [router]);
 
   // Fetch Data Perjadin
   useEffect(() => {
@@ -105,7 +112,7 @@ export default function DashuserPage() {
           const data = querySnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
-          }));
+          } as Pegawai));
           setPegawaiList(data);
         } catch (error) {
           console.error("Error fetching data:", error);
@@ -125,7 +132,7 @@ export default function DashuserPage() {
     setSortOrder("desc");
   }, [activeTab]);
 
-  const handleDelete = async (id, type = "perjadinkota") => {
+  const handleDelete = async (id: string, type: string = "perjadinkota") => {
     if (window.confirm("Apakah Anda yakin ingin menghapus data ini?")) {
       try {
         // Jika menghapus perjadin, cek apakah ada file Supabase yang perlu dihapus
@@ -158,7 +165,7 @@ export default function DashuserPage() {
     }
   };
 
-  const handleSavePegawai = async (formData) => {
+  const handleSavePegawai = async (formData: any) => {
     setIsSaving(true);
     try {
       const dataToStore = {
@@ -211,7 +218,7 @@ export default function DashuserPage() {
           console.error("Failed to create notification:", notifErr);
         }
 
-        setPegawaiList(prev => [{ id: docRef.id, ...formData, tgllahir: dataToStore.tgllahir }, ...prev]);
+        setPegawaiList(prev => [{ id: docRef.id, ...formData, tgllahir: dataToStore.tgllahir } as Pegawai, ...prev]);
         toast.success("Pegawai berhasil ditambahkan");
       }
 
@@ -225,7 +232,7 @@ export default function DashuserPage() {
     }
   };
 
-  const handlePrint = async (item, type = 'spj') => {
+  const handlePrint = async (item: any, type: string = 'spj') => {
     try {
       if (type === 'nota') {
         if (!item.dari && !item.isinota) {
@@ -249,7 +256,7 @@ export default function DashuserPage() {
     }
   };
 
-  const handleViewFile = async (path) => {
+  const handleViewFile = async (path: string) => {
     if (!path) return;
     try {
       const url = await createSignedUrl(path);
@@ -264,9 +271,6 @@ export default function DashuserPage() {
     }
   };
 
-
-  {/* Fungsi Print Menu */ }
-
   // Pagination & Sort logic
   const currentList = activeTab === "pegawai" ? pegawaiList : perjadinList;
   const sortedData = sortOrder === "asc" ? [...currentList].reverse() : currentList;
@@ -279,10 +283,6 @@ export default function DashuserPage() {
   const toggleSort = () => {
     setSortOrder(sortOrder === "desc" ? "asc" : "desc");
     setCurrentPage(1);
-  };
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
   };
 
   return (

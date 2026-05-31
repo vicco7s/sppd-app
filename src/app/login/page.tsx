@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/services/firebases";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, User as AuthUser } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import toast from "react-hot-toast";
+import { User as DbUser } from "@/types";
 
 import UpdateNotificationModal from "@/components/UpdateNotificationModal";
 import AuthBackground from "@/components/auth/AuthBackground";
@@ -19,12 +20,19 @@ export default function LoginPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    const unsubscribe = auth.onAuthStateChanged(async (user: AuthUser | null) => {
       if (user) {
         try {
           const userDoc = await getDoc(doc(db, "user", user.uid));
           if (userDoc.exists()) {
-            const role = userDoc.data().role;
+            const userData = userDoc.data() as DbUser;
+            if (userData.status === "inactive") {
+              await auth.signOut();
+              toast.error("Akun Anda telah dinonaktifkan. Silakan hubungi admin.");
+              setLoading(false);
+              return;
+            }
+            const role = userData.role;
             router.replace(role === "admin" ? "/dashbord/dashadmin" : "/dashbord/dashuser");
           } else {
             router.replace("/dashbord/dashuser");
@@ -38,9 +46,9 @@ export default function LoginPage() {
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [router]);
 
-  const handleLogin = async (email, password) => {
+  const handleLogin = async (email: string, password: string) => {
     setIsLoggingIn(true);
     setError("");
 
@@ -52,7 +60,13 @@ export default function LoginPage() {
       const userDocSnap = await getDoc(userDocRef);
 
       if (userDocSnap.exists()) {
-        const userData = userDocSnap.data();
+        const userData = userDocSnap.data() as DbUser;
+        if (userData.status === "inactive") {
+          await auth.signOut();
+          toast.error("Akun Anda telah dinonaktifkan. Silakan hubungi admin.");
+          setError("Akun Anda telah dinonaktifkan. Silakan hubungi admin.");
+          return;
+        }
         if (userData.role === "admin") {
           router.replace("/dashbord/dashadmin");
         } else {
