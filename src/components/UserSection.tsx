@@ -65,9 +65,15 @@ export default function UserSection() {
       // Urutkan secara client-side berdasarkan createdAt (desc)
       // agar data user lama yang tidak memiliki createdAt tetap muncul
       userList.sort((a, b) => {
-        const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
-        const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
-        return timeB - timeA;
+        const getTime = (timestamp: any) => {
+          if (!timestamp) return 0;
+          if (timestamp instanceof Date) return timestamp.getTime();
+          if (typeof timestamp === 'object' && 'toDate' in timestamp) {
+            return timestamp.toDate().getTime();
+          }
+          return 0;
+        };
+        return getTime(b) - getTime(a);
       });
 
       setUsers(userList);
