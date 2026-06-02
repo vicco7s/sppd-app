@@ -162,6 +162,17 @@ export default function UserSection() {
     return p ? p.nama : "Tidak Terhubung";
   };
 
+  // Helper function to format date from Timestamp or Date
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return "-";
+    try {
+      const date = timestamp instanceof Date ? timestamp : timestamp.toDate?.();
+      return date ? date.toLocaleDateString('id-ID') : "-";
+    } catch {
+      return "-";
+    }
+  };
+
   // Pagination Logic
   const totalPages = Math.ceil(users.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -256,7 +267,7 @@ export default function UserSection() {
                   <td className="px-4 py-4 text-xs text-gray-500 whitespace-nowrap">
                     <div className="flex items-center gap-1">
                       <Calendar size={12} />
-                      {user.createdAt?.toDate ? user.createdAt.toDate().toLocaleDateString('id-ID') : "-"}
+                      {formatDate(user.createdAt)}
                     </div>
                   </td>
                   <td className="px-4 py-4">
