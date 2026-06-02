@@ -8,6 +8,7 @@ import { collection, getDocs, deleteDoc, doc, query, orderBy, addDoc, serverTime
 import { toast } from "react-hot-toast";
 import { generateSPPD } from "@/lib/pdf/perjadinkota/page";
 import { generateNotaDinas } from "@/lib/pdf/perjadinkota/nota";
+import { Pegawai, User as DbUser } from "@/types/index";
 import PegawaiModal from "@/components/PegawaiModal";
 import { useInactivityLogout } from "@/hooks/useInactivityLogout";
 import Topbar from "@/components/Topbar";
@@ -19,7 +20,6 @@ import { createSignedUrl } from "@/lib/supabase/createSignedUrl";
 import AdminSidebar from "@/components/dashadmin/AdminSidebar";
 import PegawaiList from "@/components/dashadmin/PegawaiList";
 import PerjadinKotaList from "@/components/dashadmin/PerjadinKotaList";
-import { Pegawai, User as DbUser } from "@/types";
 
 export default function DashadminPage() {
     useInactivityLogout(1800000); // 30 minutes auto logout
@@ -164,7 +164,7 @@ export default function DashadminPage() {
         }
     };
 
-    const handlePrint = async (item: any, type: string = 'spj') => {
+    const handlePrint = async (item: Record<string, unknown>, type: string = 'spj'): Promise<void> => {
         try {
             if (type === 'nota') {
                 if (!item.dari && !item.isinota) {
@@ -182,7 +182,7 @@ export default function DashadminPage() {
                 toast.success("SPPD PDF berhasil dibuat!");
             }
             setPrintModalItem(null);
-        } catch (error) {
+        } catch (error: unknown) {
             toast.dismiss("sppd-loading");
             toast.dismiss("nota-loading");
             console.error("Error generating PDF:", error);
@@ -192,25 +192,43 @@ export default function DashadminPage() {
 
     const handleViewFile = async (path: string) => {
         if (!path) return;
+        
         try {
+            toast.loading("Membuka file...", { id: "file-loading" });
             const url = await createSignedUrl(path);
+            toast.dismiss("file-loading");
+            
             if (url) {
                 window.open(url, '_blank');
+                toast.success("File dibuka");
             } else {
-                toast.error("Gagal mendapatkan akses file");
+                toast.error("Gagal membuat akses file. Silakan coba lagi.");
             }
-        } catch (error) {
+        } catch (error: any) {
+            toast.dismiss("file-loading");
+            
+            const errorMsg = error?.message || "Terjadi kesalahan saat membuka file";
             console.error("Error viewing file:", error);
-            toast.error("Gagal membuka file");
+            
+            // Show specific error based on the error message
+            if (errorMsg.includes("tidak ditemukan")) {
+                toast.error("File tidak ditemukan. Mungkin sudah dihapus.");
+            } else if (errorMsg.includes("tidak memiliki akses")) {
+                toast.error(errorMsg);
+            } else if (errorMsg.includes("Konfigurasi")) {
+                toast.error(errorMsg);
+            } else {
+                toast.error(errorMsg);
+            }
         }
     };
 
-    const handleSavePegawai = async (formData: any) => {
+    const handleSavePegawai = async (formData: Record<string, unknown>): Promise<void> => {
         setIsSaving(true);
         try {
             const dataToStore = {
                 ...formData,
-                tgllahir: formData.tgllahir ? new Date(formData.tgllahir) : null
+                tgllahir: formData.tgllahir ? new Date(formData.tgllahir as string | number) : null
             };
 
             if (selectedPegawai) {
@@ -450,7 +468,7 @@ export default function DashadminPage() {
                     setSelectedPegawai(null);
                 }}
                 onSave={handleSavePegawai}
-                pegawaiData={selectedPegawai}
+                pegawaiData={selectedPegawai as any}
                 isSaving={isSaving}
             />
         </div>

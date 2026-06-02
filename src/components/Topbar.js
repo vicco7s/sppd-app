@@ -125,6 +125,13 @@ export default function Topbar({ user, role = "User" }) {
             setNotifications(notifs);
             const count = notifs.filter(n => !n.isRead).length;
             setUnreadCount(count);
+        }, (error) => {
+            // Gracefully ignore permission-denied errors during logout
+            if (error?.code === 'permission-denied') {
+                console.log("Listener closed: User logged out or permissions changed");
+                return;
+            }
+            console.error("Error listening to notifications:", error);
         });
 
         return () => unsubscribe();

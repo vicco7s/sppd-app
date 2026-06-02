@@ -155,9 +155,10 @@ export default function UserModal({ isOpen, onClose, selectedUser, pegawaiList }
         toast.success("User baru berhasil dibuat");
       }
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error saving user:", error);
-      if (error.code === "auth/email-already-in-use") {
+      const firebaseError = error as { code?: string } | undefined;
+      if (firebaseError?.code === "auth/email-already-in-use") {
         toast.error("Email sudah terdaftar");
       } else {
         toast.error(isEdit ? "Gagal memperbarui user" : "Gagal membuat user");
@@ -192,6 +193,8 @@ export default function UserModal({ isOpen, onClose, selectedUser, pegawaiList }
           <button 
             onClick={onClose}
             className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors text-white"
+            title="Tutup modal"
+            aria-label="Tutup modal"
           >
             <X size={20} />
           </button>
@@ -274,6 +277,8 @@ export default function UserModal({ isOpen, onClose, selectedUser, pegawaiList }
                       value={formData.role}
                       onChange={(e) => setFormData({...formData, role: e.target.value})}
                       className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm appearance-none"
+                      aria-label="Pilih role user"
+                      title="Pilih role user"
                     >
                       <option value="user">User Standard</option>
                       <option value="admin">Administrator</option>
@@ -289,6 +294,8 @@ export default function UserModal({ isOpen, onClose, selectedUser, pegawaiList }
                       value={formData.idPegawai}
                       onChange={handlePegawaiChange}
                       className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm appearance-none"
+                      aria-label="Pilih pegawai"
+                      title="Pilih pegawai"
                     >
                       <option value="">-- Pilih Pegawai --</option>
                       {pegawaiList.map(p => (

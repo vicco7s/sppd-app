@@ -73,6 +73,12 @@ export default function UserSection() {
       setUsers(userList);
       setLoading(false);
     }, (error) => {
+      // Gracefully ignore permission-denied errors during logout
+      if (error?.code === 'permission-denied') {
+        console.log("Listener closed: User logged out or permissions changed");
+        setLoading(false);
+        return;
+      }
       console.error("Error listening to users:", error);
       toast.error("Gagal memuat data user");
       setLoading(false);

@@ -165,12 +165,12 @@ export default function DashuserPage() {
     }
   };
 
-  const handleSavePegawai = async (formData: any) => {
+  const handleSavePegawai = async (formData: Record<string, unknown>): Promise<void> => {
     setIsSaving(true);
     try {
       const dataToStore = {
         ...formData,
-        tgllahir: formData.tgllahir ? new Date(formData.tgllahir) : null
+        tgllahir: formData.tgllahir ? new Date(formData.tgllahir as string | number) : null
       };
 
       if (selectedPegawai) {
@@ -232,7 +232,7 @@ export default function DashuserPage() {
     }
   };
 
-  const handlePrint = async (item: any, type: string = 'spj') => {
+  const handlePrint = async (item: Record<string, unknown>, type: string = 'spj'): Promise<void> => {
     try {
       if (type === 'nota') {
         if (!item.dari && !item.isinota) {
@@ -250,7 +250,7 @@ export default function DashuserPage() {
         toast.success("SPPD PDF berhasil dibuat!");
       }
       setPrintModalItem(null);
-    } catch (error) {
+    } catch (error: unknown) {
       toast.dismiss("sppd-loading");
       toast.dismiss("nota-loading");
     }
@@ -258,16 +258,34 @@ export default function DashuserPage() {
 
   const handleViewFile = async (path: string) => {
     if (!path) return;
+    
     try {
+      toast.loading("Membuka file...", { id: "file-loading" });
       const url = await createSignedUrl(path);
+      toast.dismiss("file-loading");
+      
       if (url) {
         window.open(url, '_blank');
+        toast.success("File dibuka");
       } else {
-        toast.error("Gagal mendapatkan akses file");
+        toast.error("Gagal membuat akses file. Silakan coba lagi.");
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      toast.dismiss("file-loading");
+      
+      const errorMsg = error instanceof Error ? error.message : "Terjadi kesalahan saat membuka file";
       console.error("Error viewing file:", error);
-      toast.error("Gagal membuka file");
+      
+      // Show specific error based on the error message
+      if (errorMsg.includes("tidak ditemukan")) {
+        toast.error("File tidak ditemukan. Mungkin sudah dihapus.");
+      } else if (errorMsg.includes("tidak memiliki akses")) {
+        toast.error(errorMsg);
+      } else if (errorMsg.includes("Konfigurasi")) {
+        toast.error(errorMsg);
+      } else {
+        toast.error(errorMsg);
+      }
     }
   };
 
@@ -403,7 +421,7 @@ export default function DashuserPage() {
           setSelectedPegawai(null);
         }}
         onSave={handleSavePegawai}
-        pegawaiData={selectedPegawai}
+        pegawaiData={selectedPegawai as any}
         isSaving={isSaving}
       />
     </div>

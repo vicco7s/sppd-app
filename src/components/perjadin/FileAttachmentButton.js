@@ -17,12 +17,24 @@ const FileAttachmentButton = ({ path, fileName, label = "Surat Undangan" }) => {
       const signedUrl = await createSignedUrl(path);
       if (signedUrl) {
         window.open(signedUrl, '_blank');
+        toast.success('File dibuka');
       } else {
-        throw new Error('Gagal mendapatkan akses file');
+        toast.error('Gagal membuat akses file');
       }
     } catch (error) {
       console.error('Error opening file:', error);
-      toast.error('Gagal membuka file. Silakan coba lagi.');
+      
+      const errorMsg = error?.message || "Gagal membuka file";
+      
+      if (errorMsg.includes("tidak ditemukan")) {
+        toast.error("File tidak ditemukan. Mungkin sudah dihapus.");
+      } else if (errorMsg.includes("tidak memiliki akses")) {
+        toast.error(errorMsg);
+      } else if (errorMsg.includes("Konfigurasi")) {
+        toast.error("Konfigurasi sistem tidak lengkap");
+      } else {
+        toast.error(errorMsg);
+      }
     } finally {
       setIsLoading(false);
     }
