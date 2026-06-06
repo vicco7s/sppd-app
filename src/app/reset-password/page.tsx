@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent, type ChangeEvent } from "react";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/services/firebases";
 import toast from "react-hot-toast";
@@ -13,12 +13,12 @@ import LoginInput from "@/components/auth/LoginInput";
 import LoginButton from "@/components/auth/LoginButton";
 
 export default function ResetPassword() {
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
   const router = useRouter();
 
-  const handleReset = async (e) => {
+  const handleReset = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -27,7 +27,7 @@ export default function ResetPassword() {
       await sendPasswordResetEmail(auth, email);
       toast.success("Link reset password telah dikirim ke email Anda");
       setTimeout(() => router.replace("/login"), 1500);
-    } catch (err) {
+    } catch (err: unknown) {
       setError("Email tidak ditemukan atau terjadi kesalahan.");
       toast.error("Email tidak ditemukan");
     } finally {
@@ -49,14 +49,13 @@ export default function ResetPassword() {
 
         <form className="space-y-5" onSubmit={handleReset}>
           <LoginInput
-            id="email"
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="nama@gmail.com"
-            required
-          />
+                      id="email"
+                      label="Email"
+                      type="email"
+                      value={email}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                      placeholder="nama@gmail.com"
+                      required suffix={undefined}          />
 
           <div className="pt-2">
             <LoginButton loading={loading}>

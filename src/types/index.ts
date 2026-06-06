@@ -6,6 +6,8 @@ export interface Pegawai {
   nip: string;
   jabatan: string;
   pangkat: string;
+  rek?: string;
+  bank?: string;
   tgllahir?: Timestamp | Date | string | null;
   createdAt?: Timestamp | Date | null;
   [key: string]: unknown; // Allow additional fields from Firebase
