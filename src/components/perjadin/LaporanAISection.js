@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { model } from "@/services/firebases";
+import { generateContentWithRetry } from "@/lib/ai/callWithRetry";
 
 const LaporanAISection = ({ 
     formData, 
@@ -39,8 +39,7 @@ const LaporanAISection = ({
               "saran": ""
             }`;
 
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
+            const response = await generateContentWithRetry(prompt);
             const text = response.text();
             const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
             const data = JSON.parse(cleanText);

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Zap, ZapOff, TimerResetIcon, Sparkles } from 'lucide-react';
 import { Timestamp } from "firebase/firestore";
 import toast from "react-hot-toast";
-import { model } from "@/services/firebases";
+import { generateContentWithRetry } from "@/lib/ai/callWithRetry";
 
 // Sub-components
 import PersonilSection from './perjadin/PersonilSection';
@@ -164,8 +164,7 @@ const PerjadinForm = ({ onSubmit, isSubmitting, initialData = null, pegawaiList 
             Atau gaya langsung: "Menghadiri [perihal] di [tujuan]"
 
             Berikan HANYA teks hasilnya saja yang paling natural menurutmu.`;
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
+            const response = await generateContentWithRetry(prompt);
             const text = response.text().trim();
             setFormData(prev => ({ ...prev, untuk: text }));
             toast.success("Maksud/Untuk berhasil di-generate!");

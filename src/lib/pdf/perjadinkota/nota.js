@@ -124,42 +124,56 @@ export async function drawNotaLayout(pdfDoc, data, pegawaiUtama, pengikutList) {
     pdfDoc.text(perihalLines, valueX, y);
     y += perihalLines.length * 5 + 10;
 
-    // ========== ISI NOTA DINAS ==========
-    // ========== ISI NOTA DINAS ==========
+    // ========== ISI NOTA DINAS (3 Paragraf) ==========
     pdfDoc.setFont("helvetica", "normal");
     pdfDoc.setFontSize(11);
     
     const isiText = data.isinota || "-";
-    const paragraphs = isiText.split('\n');
+    // Split by double newline to get individual paragraphs
+    const paragraphs = isiText.split('\n\n').filter(p => p.trim());
 
-    paragraphs.forEach(para => {
-        const trimmed = para.trim();
-        if (!trimmed) {
-            y += 4;
-            return;
-        }
-        // Kalimat pertama menjorok kedalam (indentasi 5 spasi)
-        const textToDraw = "     " + trimmed;
+    let hasClosing = false;
+
+    const renderParagraph = (text) => {
+        // First line indent: 5 spasi
+        const indentStr = "     ";
+        const textToDraw = indentStr + text;
         const lines = pdfDoc.splitTextToSize(textToDraw, contentWidth);
         
-        // Render per baris agar spacing rapi
-        lines.forEach((line) => {
-            pdfDoc.text(line, marginLeft, y, { align: 'justify', maxWidth: contentWidth });
-            y += 5.5; // Line spacing yang lebih standar dan rapi
-        });
+        // Calculate line height based on font size
+        const lineHeight = 6;
         
-        y += 2; // Jarak antar paragraf
+        // Render baris pertama dengan indent, baris berikutnya rata kiri-normal
+        lines.forEach((line, lineIdx) => {
+            // Baris pertama: indent 5 spasi (already in text)
+            // Baris ke-2+: rata kiri normal (tidak menjorok)
+            pdfDoc.text(line, marginLeft, y);
+            y += lineHeight;
+        });
+    };
+
+    paragraphs.forEach((para, idx) => {
+        const trimmed = para.trim();
+        if (!trimmed) return;
+
+        // Detect if this paragraph already contains the closing statement
+        if (trimmed.toLowerCase().includes("demikian disampaikan") || 
+            trimmed.toLowerCase().includes("diucapkan terima kasih")) {
+            hasClosing = true;
+        }
+
+        renderParagraph(trimmed);
+        
+        // Jarak antar paragraf
+        y += idx < paragraphs.length - 1 ? 5 : 2;
     });
 
-    y += 4;
-
-    // ========== PENUTUP ==========
-    const penutup = "     " + "Demikian disampaikan, atas perhatian dan perkenan Bapak diucapkan terima kasih.";
-    const penutupLines = pdfDoc.splitTextToSize(penutup, contentWidth);
-    penutupLines.forEach((line) => {
-        pdfDoc.text(line, marginLeft, y, { align: 'justify', maxWidth: contentWidth });
-        y += 5.5;
-    });
+    // Penutup otomatis hanya jika belum ada di isi nota
+    if (!hasClosing) {
+        y += 2;
+        const penutup = "Demikian disampaikan, atas perhatian dan perkenan Bapak diucapkan terima kasih.";
+        renderParagraph(penutup);
+    }
     y += 8;
 
     // ========== PENGIKUT SECTION ==========
