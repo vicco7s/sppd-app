@@ -20,7 +20,7 @@ const app: FirebaseApp = initializeApp(firebaseConfig);
 export const auth: Auth = getAuth(app);
 export const db: Firestore = getFirestore(app);
 export const ai = getAI(app, { backend: new GoogleAIBackend() });
-export const model = getGenerativeModel(ai, { model: "gemini-2.5-flash" });
+export const model = getGenerativeModel(ai, { model: "gemini-3.1-flash-lite" });
 
 // Secondary app for user management (to avoid logging out current admin)
 export const secondaryApp: FirebaseApp =

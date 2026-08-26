@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Bell, Sparkles, Zap, Calendar, Bot, Send, ArrowRight, Pen, Paperclip, PrinterIcon, Flame, PartyPopperIcon, CloverIcon, FlagTriangleLeft, PrinterCheck, Database, History } from "lucide-react";
+import { X, Bell, Sparkles, Zap, Calendar, Bot, Send, ArrowRight, Pen, Paperclip, PrinterIcon, Flame, PartyPopperIcon, CloverIcon, FlagTriangleLeft, PrinterCheck, Database, History, BrainCircuit, Notebook } from "lucide-react";
 import { db } from "@/services/firebases";
 import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
@@ -60,6 +60,8 @@ export default function UpdateNotificationModal() {
             PrinterIcon: <PrinterIcon size={13} className="text-emerald-400" />,
             FlagTriangleLeft: <FlagTriangleLeft size={13} className="text-blue-400" />,
             History: <History size={13} className="text-blue-400" />,
+            Brain: <BrainCircuit size={13} className="text-red-500" />,
+            Notebook: <Notebook size={13} className="text-zinc-600" />,
         };
         return iconMap[iconName] || <Zap size={13} className="text-blue-400" />;
     };
@@ -74,7 +76,7 @@ export default function UpdateNotificationModal() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md"
+                    className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm"
                 >
                     {/* Modal Card */}
                     <motion.div
@@ -82,18 +84,11 @@ export default function UpdateNotificationModal() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.95 }}
                         transition={{ type: "spring", stiffness: 350, damping: 20, mass: 1 }}
-                        className="relative w-full max-w-[420px] rounded-[2.5rem] overflow-hidden shadow-2xl"
-                        style={{
-                            background: "linear-gradient(145deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.06) 100%)",
-                            backdropFilter: "blur(30px) saturate(150%)",
-                            WebkitBackdropFilter: "blur(30px) saturate(150%)",
-                            border: "1px solid rgba(255,255,255,0.18)",
-                        }}
+                        className="relative w-full max-w-[500px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
                     >
                         {/* Inner highlight line at top */}
                         <div
-                            className="absolute top-0 left-6 right-6 h-px rounded-full"
-                            style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent)" }}
+                            className="absolute inset-x-8 top-0 h-1 rounded-b-full bg-blue-600"
                         />
 
                         {/* ─────── HEADER ─────── */}
@@ -102,13 +97,13 @@ export default function UpdateNotificationModal() {
                             <div
                                 className="absolute inset-0"
                                 style={{
-                                    background: "linear-gradient(135deg, rgba(99,102,241,0.22) 0%, rgba(59,130,246,0.14) 60%, transparent 100%)",
+                                    background: "linear-gradient(135deg, rgba(239,246,255,0.95) 0%, rgba(255,255,255,0) 75%)",
                                 }}
                             />
                             {/* Soft orb top-right */}
                             <div
                                 className="absolute -top-8 -right-8 w-40 h-40 rounded-full pointer-events-none"
-                                style={{ background: "radial-gradient(circle, rgba(139,92,246,0.28) 0%, transparent 70%)", filter: "blur(24px)" }}
+                                style={{ background: "radial-gradient(circle, rgba(147,197,253,0.18) 0%, transparent 70%)", filter: "blur(24px)" }}
                             />
 
                             <div className="relative z-10 flex items-start justify-between">
@@ -120,11 +115,9 @@ export default function UpdateNotificationModal() {
                                         className="relative"
                                     >
                                         <div
-                                            className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                                            className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 shadow-lg shadow-blue-600/20"
                                             style={{
-                                                background: "linear-gradient(135deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.08) 100%)",
-                                                border: "1px solid rgba(255,255,255,0.25)",
-                                                boxShadow: "0 4px 16px rgba(99,102,241,0.3), inset 0 1px 0 rgba(255,255,255,0.3)",
+                                                background: "#002fb1",
                                             }}
                                         >
                                             <Sparkles className="text-white" size={20} />
@@ -137,8 +130,8 @@ export default function UpdateNotificationModal() {
                                     </motion.div>
 
                                     <div>
-                                        <h2 className="text-[20px] font-extrabold tracking-tight text-white leading-none">
-                                            What's a New ?
+                                        <h2 className="text-xl font-bold tracking-tight text-slate-900 leading-none">
+                                            What&apos;s New?
                                         </h2>
                                         <div className="flex items-center gap-2 mt-2">
                                             {/* Version pill */}
@@ -150,15 +143,15 @@ export default function UpdateNotificationModal() {
                                                     backdropFilter: "blur(10px)",
                                                 }}
                                             >
-                                                <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                                                <span className="text-[10px] font-bold text-white/80 uppercase tracking-wider">
+                                                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700">
                                                     {latestUpdate.version || "v3.0"}
                                                 </span>
                                             </div>
                                             {/* Date pill */}
-                                            <div className="flex items-center gap-1 px-2 py-1 rounded-full" style={{ background: "rgba(255,255,255,0.07)" }}>
-                                                <Calendar size={9} className="text-white/50" />
-                                                <span className="text-[9px] font-semibold text-white/50">
+                                            <div className="flex items-center gap-1 px-2 py-1 rounded-full" style={{ background: "#002fb1" }}>
+                                                <Calendar size={10} className="text-slate-400 text-white" />
+                                                <span className="text-[10px] font-medium text-slate-500 text-white">
                                                     {latestUpdate.date || "Terbaru"}
                                                 </span>
                                             </div>
@@ -169,45 +162,40 @@ export default function UpdateNotificationModal() {
                                 {/* Close button */}
                                 <motion.button
                                     onClick={handleClose}
+                                    aria-label="Tutup pembaruan"
                                     whileHover={{ scale: 1.15 }}
                                     whileTap={{ scale: 0.85 }}
                                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                                    className="flex items-center justify-center w-9 h-9 rounded-2xl"
+                                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-700"
                                     style={{
-                                        background: "rgba(255,255,255,0.1)",
-                                        border: "1px solid rgba(255,255,255,0.16)",
+                                        background: "#fafafa",
                                     }}
                                 >
-                                    <X size={15} className="text-white/70" />
+                                    <X size={16} />
                                 </motion.button>
                             </div>
 
                             {/* AI badge */}
-                            <div className="relative z-10 mt-4 flex items-center gap-1.5 w-fit px-2.5 py-1 rounded-lg"
+                            <div className="relative z-10 mt-5 flex w-fit items-center gap-1.5 rounded-md bg-slate-100 px-2.5 py-1.5"
                                 style={{
-                                    background: "rgba(255,255,255,0.06)",
-                                    border: "1px solid rgba(255,255,255,0.1)",
+                                    background: "#f1f5f9",
                                 }}
                             >
-                                <Bot size={11} className="text-indigo-300" />
-                                <span className="text-[9px] font-bold text-indigo-200/80 tracking-widest uppercase">Powered by Gemini AI 2.5 Flash</span>
+                                <Bot size={12} className="text-indigo-600" />
+                                <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500">New AI Gemini 3.1 Flash Lite and GLM 4.7 Flash</span>
                             </div>
                         </div>
 
                         {/* ─────── SCROLLABLE CONTENT ─────── */}
                         <div
                             className="max-h-[340px] overflow-y-auto px-6 pb-2 pt-1 liquid-glass-scroll"
-                            style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.12) transparent" }}
+                            style={{ scrollbarWidth: "thin", scrollbarColor: "#cbd5e1 transparent" }}
                         >
                             <div className="space-y-3 pb-4">
                                 {/* Latest update label */}
                                 <div className="flex items-center gap-2 mb-3 px-1">
-                                    <div
-                                        className="h-3 w-px rounded-full"
-                                        style={{ background: "linear-gradient(to bottom, rgba(139,92,246,0.9), rgba(59,130,246,0.5))" }}
-                                    />
-                                    <span className="text-[10px] font-black uppercase tracking-[0.18em]"
-                                        style={{ color: "rgba(220,225,255,0.9)" }}>
+                                    <div className="h-3 w-1 rounded-full bg-indigo-600" />
+                                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
                                         Fitur &amp; Pembaruan
                                     </span>
                                 </div>
@@ -229,11 +217,11 @@ export default function UpdateNotificationModal() {
                                     <div className="space-y-4 pt-4 mt-2">
                                         <div
                                             className="h-px w-full"
-                                            style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)" }}
+                                            style={{ background: "linear-gradient(90deg, transparent, rgba(8, 8, 8, 0.49), transparent)" }}
                                         />
                                         <div className="flex items-center gap-2 px-1">
                                             <History size={11} className="text-white/55" />
-                                            <span className="text-[9px] font-black uppercase tracking-[0.18em] text-white/55">
+                                            <span className="text-[9px] font-black uppercase tracking-[0.18em] text-black/55">
                                                 Riwayat Update
                                             </span>
                                         </div>
@@ -242,24 +230,17 @@ export default function UpdateNotificationModal() {
                                             <div key={`history-update-${updateIdx}`} className="space-y-2">
                                                 {/* Version header */}
                                                 <div className="flex items-center justify-between px-1">
-                                                    <span
-                                                        className="text-[10px] font-bold px-2.5 py-0.5 rounded-full"
-                                                        style={{
-                                                            background: "rgba(255,255,255,0.12)",
-                                                            border: "1px solid rgba(255,255,255,0.18)",
-                                                            color: "rgba(220,230,255,0.95)",
-                                                        }}
-                                                    >
+                                                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[10px] font-bold text-slate-600">
                                                         {update.version}
                                                     </span>
-                                                    <span className="text-[9px] font-medium text-white/55">{update.date}</span>
+                                                    <span className="text-[9px] font-medium text-slate-400">{update.date}</span>
                                                 </div>
                                                 {/* History items */}
-                                                <div className="space-y-1.5 pl-2 border-l border-white/[0.06]">
+                                                <div className="space-y-1.5 border-l border-slate-200 pl-2">
                                                     {update.items?.map((item, idx) => (
                                                         <div key={`history-${updateIdx}-item-${idx}`} className="flex gap-2.5 items-start">
-                                                            <div className="mt-1.5 w-1 h-1 rounded-full shrink-0 bg-white/40" />
-                                                            <p className="text-[10px] text-white/70 font-medium leading-relaxed">{item.text}</p>
+                                                            <div className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-slate-400" />
+                                                            <p className="text-[10px] font-medium leading-relaxed text-slate-500">{item.text}</p>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -272,36 +253,29 @@ export default function UpdateNotificationModal() {
 
                         {/* ─────── FOOTER ─────── */}
                         <div
-                            className="px-6 py-5 flex items-center justify-between"
-                            style={{
-                                background: "linear-gradient(to top, rgba(0,0,0,0.2) 0%, transparent 100%)",
-                                borderTop: "1px solid rgba(255,255,255,0.06)",
-                            }}
+                            className="flex items-center justify-between border-t border-slate-100 px-6 py-4"
                         >
                             {/* Status dot + version */}
                             <div className="flex items-center gap-2">
                                 <div
                                     className="w-1.5 h-1.5 rounded-full bg-emerald-400"
-                                    style={{ boxShadow: "0 0 6px rgba(52,211,153,0.8)" }}
+                                    style={{ boxShadow: "0 0 6px #34d399" }}
                                 />
-                                <span className="text-[9px] font-bold uppercase tracking-widest text-white/50">
-                                    {latestUpdate.version || "v3.0.0.stable"}
+                                <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+                                    {latestUpdate.version || "v3.0.0.stable"} Beta
                                 </span>
                             </div>
 
                             {/* Liquid glass close button */}
                             <motion.button
                                 onClick={handleClose}
-                                whileHover={{ scale: 1.05, backgroundColor: "rgba(255, 255, 255, 0.15)" }}
+                                aria-label="Tutup pembaruan"
+                                whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                                className="group relative flex items-center gap-2 px-6 py-2.5 rounded-2xl overflow-hidden text-xs font-bold text-white shadow-sm"
+                                className="group relative flex items-center gap-2 overflow-hidden rounded-lg bg-slate-900 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
                                 style={{
-                                    background: "rgba(255, 255, 255, 0.08)",
-                                    backdropFilter: "blur(12px)",
-                                    WebkitBackdropFilter: "blur(12px)",
-                                    border: "1px solid rgba(255, 255, 255, 0.15)",
-                                    boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+                                    background: "#002fb1",
                                 }}
                             >
                                 <span className="relative z-10">Tutup</span>
@@ -326,11 +300,11 @@ export default function UpdateNotificationModal() {
                     background: transparent;
                 }
                 .liquid-glass-scroll::-webkit-scrollbar-thumb {
-                    background: rgba(255,255,255,0.12);
+                    background: #cbd5e1;
                     border-radius: 10px;
                 }
                 .liquid-glass-scroll::-webkit-scrollbar-thumb:hover {
-                    background: rgba(255,255,255,0.22);
+                    background: #94a3b8;
                 }
             `}</style>
         </AnimatePresence>
@@ -347,25 +321,21 @@ function GlassUpdateItem({ icon, text, index }) {
                 scale: 1.015,
                 boxShadow: "0 4px 20px rgba(99,102,241,0.15), inset 0 1px 0 rgba(255,255,255,0.1)",
             }}
-            className="flex gap-3.5 items-center px-4 py-3 rounded-2xl transition-all cursor-default"
+            className="flex cursor-default items-center gap-3.5 rounded-xl border border-slate-200 bg-white px-4 py-3 transition-all hover:border-blue-200 hover:bg-blue-50/40"
             style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.09)",
-                backdropFilter: "blur(10px)",
+                boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
             }}
         >
             {/* Icon glass chip */}
             <div
-                className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50"
                 style={{
-                    background: "linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.05) 100%)",
-                    border: "1px solid rgba(255,255,255,0.14)",
-                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15)",
+                    border: "1px solid #dbeafe",
                 }}
             >
                 {icon}
             </div>
-            <p className="text-[12px] font-semibold leading-snug" style={{ color: "rgba(245,248,255,0.97)" }}>
+            <p className="text-[12px] font-semibold leading-snug text-slate-700">
                 {text}
             </p>
         </motion.div>

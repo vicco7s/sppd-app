@@ -7,7 +7,7 @@ export default function AuthBackground({ children }) {
       <div
         className="absolute inset-0"
         style={{
-          background: "linear-gradient(135deg, #fdfbf7 0%, #f0f4f8 100%)",
+          background: "linear-gradient(135deg, #002fb1 0%, #fdfdfd 100%)",
         }}
       />
 

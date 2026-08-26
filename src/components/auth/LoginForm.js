@@ -63,13 +63,13 @@ export default function LoginForm({ onSubmit, loading, onForgotPassword, error }
         <button
           type="button"
           onClick={onForgotPassword}
-          className="text-[13px] font-medium text-slate-500 hover:text-blue-600 transition-colors"
+          className="text-[13px] font-medium text-slate-500 hover:text-indigo-600 transition-colors"
         >
           Lupa Password?
         </button>
         <span className="text-[13px] text-slate-400">
           Belum punya akun?{" "}
-          <a href="#" className="font-semibold text-blue-600 hover:text-blue-700 transition-colors">
+          <a href="#" className="font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">
             Sign up
           </a>
         </span>

@@ -427,48 +427,22 @@ PENTING: Untuk Recommended dan Formal, output HARUS memiliki 3 key terpisah (P1,
 
 /** Mini indicator — sisa kuota AI hari ini */
 function QuotaIndicator() {
-    const [status, setStatus] = useState({ used: 0, limit: 15, remaining: 15, percentage: 0 });
-
-    useEffect(() => {
+    const [status] = useState(() => {
         try {
-            setStatus(getAiUsageStatus());
+            return getAiUsageStatus();
         } catch (e) {
-            // Ignore if not available
+            return { used: 0, limit: null, remaining: null, percentage: 0 };
         }
-    }, []);
+    });
 
-    const { used, limit, remaining, percentage } = status;
-    const isLow = remaining <= 3;
-    const isCritical = remaining <= 1;
+    const { used } = status;
 
     return (
-        <div className={`flex items-center gap-2 mb-3 px-3 py-1.5 rounded-lg ${
-            isCritical ? "bg-red-50 border border-red-200" :
-            isLow ? "bg-amber-50 border border-amber-200" :
-            "bg-gray-100/50"
-        }`}>
-            <Gauge size={12} className={
-                isCritical ? "text-red-500" :
-                isLow ? "text-amber-500" :
-                "text-gray-400"
-            } />
+        <div className="flex items-center gap-2 mb-3 px-3 py-1.5 rounded-lg bg-gray-100/50">
+            <Gauge size={12} className="text-gray-400" />
             <div className="flex-1 flex items-center gap-2">
-                <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                        className={`h-full rounded-full transition-all ${
-                            isCritical ? "bg-red-500" :
-                            isLow ? "bg-amber-500" :
-                            "bg-blue-500"
-                        }`}
-                        style={{ width: `${Math.min(percentage, 100)}%` }}
-                    />
-                </div>
-                <span className={`text-[10px] font-medium whitespace-nowrap ${
-                    isCritical ? "text-red-600" :
-                    isLow ? "text-amber-600" :
-                    "text-gray-500"
-                }`}>
-                    {remaining}/{limit} tersisa
+                <span className="text-[10px] font-medium whitespace-nowrap text-gray-500">
+                    {used} request hari ini
                 </span>
             </div>
         </div>

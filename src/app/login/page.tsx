@@ -96,23 +96,48 @@ export default function LoginPage() {
 
   return (
     <AuthBackground>
-      <LoginCard>
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            masuk ke akun anda
-          </h1>
-          <p className="text-sm text-slate-500 mt-2 leading-relaxed">
-            Selamat datang. Silakan masukkan Email dan Password Anda untuk Login.
-          </p>
+      <div className="grid w-full max-w-[1120px] grid-cols-1 overflow-hidden rounded-[28px] bg-white shadow-[0_24px_70px_rgba(15,23,42,0.10)] lg:grid-cols-[0.92fr_1.08fr]">
+        <div className="flex items-center px-7 py-10 sm:px-12 lg:px-16 lg:py-14">
+          <LoginCard>
+            <div className="mb-8">
+              <div className="mb-10 flex items-center gap-2 text-sm font-bold text-slate-900">
+                <span className="h-2 w-2 rounded-full bg-indigo-600" />
+                Version 4.1.0 Gemini x GLM
+              </div>
+              <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+                Masuk ke akun Anda
+              </h1>
+              <p className="mt-3 text-sm leading-relaxed text-slate-500">
+                Selamat datang. Silakan masukkan Email dan Password Anda untuk Login.
+              </p>
+            </div>
+
+            <LoginForm 
+              onSubmit={handleLogin} 
+              loading={isLoggingIn} 
+              error={error}
+              onForgotPassword={() => router.replace("/reset-password")}
+            />
+          </LoginCard>
         </div>
 
-        <LoginForm 
-          onSubmit={handleLogin} 
-          loading={isLoggingIn} 
-          error={error}
-          onForgotPassword={() => router.replace("/reset-password")}
-        />
-      </LoginCard>
+        <div className="relative hidden min-h-[620px] overflow-hidden bg-slate-100 lg:block">
+          <img
+            src="https://i.pinimg.com/736x/f6/4b/ea/f64bea7dbdecea42e706d76486a90e0f.jpg"
+            alt="Ilustrasi halaman login"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/45 via-transparent to-transparent" />
+          <div className="absolute bottom-10 left-10 max-w-sm text-white">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/70">
+              Coming Soon
+            </p>
+            <p className="mt-3 text-2xl font-semibold leading-tight">
+              Version 5.0
+            </p>
+          </div>
+        </div>
+      </div>
 
       <UpdateNotificationModal />
     </AuthBackground>

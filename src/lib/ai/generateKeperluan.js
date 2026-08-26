@@ -1,4 +1,5 @@
-import { model, db } from "@/services/firebases";
+import { db } from "@/services/firebases";
+import { generateContentWithRetry } from "./callWithRetry";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 
 /**
@@ -48,7 +49,7 @@ export const buildFormContext = (formData) => {
 };
 
 /**
- * Generate keperluan suggestions using Gemini AI
+ * Generate keperluan suggestions using GLM AI
  * @param {Object} formData - Current form data
  * @param {Array} recentHistory - Array of recent kwitansi records
  * @returns {Promise<string[]>} Array of suggestion strings
@@ -79,8 +80,7 @@ Instruksi:
 5. Variasikan opsi: satu mirip riwayat, satu lebih ringkas, satu lebih detail.
 6. Kembalikan HANYA array JSON tanpa markdown: ["opsi 1", "opsi 2", "opsi 3"]`;
 
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
+  const response = await generateContentWithRetry(prompt);
   const text = response.text();
   const cleanJson = text.replace(/```json/g, "").replace(/```/g, "").trim();
   const suggestions = JSON.parse(cleanJson);

@@ -1,16 +1,14 @@
 /**
  * Client-side AI Rate Limiter
  * 
- * Mencegah error 429 (quota exceeded) dengan membatasi jumlah request
- * AI per hari dan memberi jeda antar request.
+ * Mencegah request beruntun yang dapat memicu rate limit provider.
  * 
- * Free tier Gemini 2.5 Flash: 20 requests/day
- * Kita batasi di 15 requests/day untuk safety buffer.
+ * Batasi pemakaian generator teks agar tidak membebani layanan AI.
+ * Vision Gemini tetap memakai limiter yang sama untuk konsistensi UI.
  */
 
-const DAILY_LIMIT = 15;
 const COOLDOWN_MS = 8000; // 8 detik minimal antar request
-const STORAGE_KEY = "sppd_ai_usage";
+const STORAGE_KEY = "sppd_ai_usage_v2";
 
 /**
  * Get today's date as YYYY-MM-DD string
@@ -62,29 +60,20 @@ const getCooldownRemaining = () => {
 export const checkRateLimit = () => {
     const data = getUsageData();
 
-    // Cek batas harian
-    if (data.count >= DAILY_LIMIT) {
-        return {
-            allowed: false,
-            reason: `Batas penggunaan AI hari ini sudah tercapai (${DAILY_LIMIT}/${DAILY_LIMIT}). Silakan coba lagi besok.`,
-            remaining: 0,
-        };
-    }
-
     // Cek cooldown antar request
     const cooldownRemaining = getCooldownRemaining();
     if (cooldownRemaining > 0) {
         return {
             allowed: false,
             reason: `Mohon tunggu ${cooldownRemaining} detik sebelum menggunakan AI lagi.`,
-            remaining: DAILY_LIMIT - data.count,
+            remaining: null,
             cooldown: cooldownRemaining,
         };
     }
 
     return {
         allowed: true,
-        remaining: DAILY_LIMIT - data.count,
+        remaining: null,
     };
 };
 
@@ -100,27 +89,16 @@ export const recordRequest = () => {
 };
 
 /**
- * Set quota ke exhausted (dipanggil saat dapat 429 dari server)
- * Supaya client tidak terus mencoba dan kena 429 lagi.
- */
-export const exhaustQuota = () => {
-    const data = getUsageData();
-    data.count = DAILY_LIMIT;
-    data.lastRequest = Date.now();
-    saveUsageData(data);
-};
-
-/**
- * Dapatkan status penggunaan AI hari ini
- * @returns {{ used: number, limit: number, remaining: number, percentage: number }}
+ * Dapatkan status penggunaan AI hari ini untuk indikator UI.
+ * Kuota sebenarnya dikelola oleh provider AI.
  */
 export const getUsageStatus = () => {
     const data = getUsageData();
     return {
         used: data.count,
-        limit: DAILY_LIMIT,
-        remaining: Math.max(0, DAILY_LIMIT - data.count),
-        percentage: Math.round((data.count / DAILY_LIMIT) * 100),
+        limit: null,
+        remaining: null,
+        percentage: 0,
     };
 };
 

@@ -1,5 +1,5 @@
-import { model } from "@/services/firebases";
-import { guardRateLimit, recordRequest, getUsageStatus, exhaustQuota } from "./rateLimiter";
+import { generateTextWithGLM } from "./glmClient";
+import { guardRateLimit, recordRequest, getUsageStatus } from "./rateLimiter";
 
 const MAX_RETRIES = 3;
 
@@ -37,7 +37,7 @@ export const getAiUsageStatus = () => {
 };
 
 /**
- * Call Gemini model.generateContent with automatic retry on server errors
+ * Call GLM text generation with automatic retry on server errors
  * and client-side rate limiting to prevent quota exhaustion.
  * @param {string} prompt - The prompt to send
  * @returns {Promise<Object>} - The response object
@@ -47,29 +47,28 @@ export const generateContentWithRetry = async (prompt, retryCount = 1) => {
     guardRateLimit();
 
     try {
-        const result = await model.generateContent(prompt);
+        const result = await generateTextWithGLM(prompt);
         // Catat request yang berhasil
         recordRequest();
-        return await result.response;
+        return result;
     } catch (err) {
-        // Jika 429 (quota server habis) — sync ke client & kasih pesan jelas
-        const isQuota = String(err?.status || err?.code || err?.error?.status || "").includes("429");
-        if (isQuota) {
-            // Sync client counter ke limit supaya tidak coba lagi hari ini
-            exhaustQuota();
-            throw new Error(
-                "Kuota harian AI (20/hari) sudah habis. Silakan coba lagi besok."
-            );
-        }
-
         if (retryCount < MAX_RETRIES && isRetryableError(err)) {
-            const delay = Math.min(1000 * Math.pow(2, retryCount), 8000);
+            const isRateLimited = String(err?.status || err?.code || err?.error?.status || "").includes("429");
+            const delay = isRateLimited
+                ? Math.min(5000 * Math.pow(2, retryCount - 1), 20000)
+                : Math.min(1000 * Math.pow(2, retryCount), 8000);
             console.warn(
                 `[AI Retry] ${retryCount}/${MAX_RETRIES} after ${delay}ms:`,
                 err?.message || err
             );
             await sleep(delay);
             return generateContentWithRetry(prompt, retryCount + 1);
+        }
+
+        if (String(err?.status || err?.code || err?.error?.status || "").includes("429")) {
+            throw new Error(
+                "GLM masih mencapai batas concurrency/rate limit setelah beberapa percobaan. Silakan coba lagi nanti."
+            );
         }
         throw err;
     }
