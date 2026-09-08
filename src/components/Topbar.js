@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Bell, User } from "lucide-react";
+import { Bell, Moon, Sun } from "lucide-react";
 import { auth, db } from "@/services/firebases";
 import { signOut } from "firebase/auth";
 import { collection, query, orderBy, limit, onSnapshot, getDocs, where, writeBatch, doc, getDoc } from "firebase/firestore";
@@ -19,9 +19,23 @@ export default function Topbar({ user, role = "User" }) {
     const [unreadCount, setUnreadCount] = useState(0);
     const [openProfile, setOpenProfile] = useState(false);
     const [employeeName, setEmployeeName] = useState("");
+    const [theme, setTheme] = useState("light");
 
     const notificationRef = useRef(null);
     const profileRef = useRef(null);
+
+    useEffect(() => {
+        const savedTheme = window.localStorage.getItem("dashboard-theme") || "light";
+        setTheme(savedTheme);
+        document.documentElement.dataset.theme = savedTheme;
+    }, []);
+
+    const toggleTheme = () => {
+        const nextTheme = theme === "dark" ? "light" : "dark";
+        setTheme(nextTheme);
+        window.localStorage.setItem("dashboard-theme", nextTheme);
+        document.documentElement.dataset.theme = nextTheme;
+    };
 
     // Fetch employee name from pegawai collection based on idPegawai in user collection
     useEffect(() => {
@@ -63,7 +77,7 @@ export default function Topbar({ user, role = "User" }) {
         };
 
         fetchEmployeeName();
-    }, [user?.uid]);
+    }, [user?.uid, user?.displayName]);
 
     // Auto-cleanup old notifications (older than 30 days) - Admin Only
     useEffect(() => {
@@ -121,7 +135,7 @@ export default function Topbar({ user, role = "User" }) {
                     // Check if current user has read this notif
                     isRead: data.readBy?.includes(user.uid) || false
                 };
-            });
+            }).filter((notif) => notif.type !== "login" && notif.title !== "Login");
             setNotifications(notifs);
             const count = notifs.filter(n => !n.isRead).length;
             setUnreadCount(count);
@@ -187,11 +201,22 @@ export default function Topbar({ user, role = "User" }) {
     };
 
     return (
-        <header className="h-16 bg-white flex items-center px-6 shadow-sm">
-            <div className="flex-1">
-            </div>
-
-            <div className="flex items-center gap-4 relative">
+        <header className="sticky top-3 z-40 mx-3 flex min-h-16 items-center justify-end rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-sm backdrop-blur sm:mx-6 sm:px-6">
+            {/* Mode dark & Light */}
+            <div className="flex items-center gap-3">
+                <button
+                    type="button"
+                    onClick={toggleTheme}
+                    className="flex h-10 items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1 text-slate-500 shadow-inner"
+                    aria-label={theme === "dark" ? "Gunakan mode terang" : "Gunakan mode gelap"}
+                >
+                    <span className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${theme === "light" ? "bg-white text-amber-500 shadow-sm" : "text-slate-400"}`}>
+                        <Sun size={16} />
+                    </span>
+                    <span className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${theme === "dark" ? "bg-slate-800 text-cyan-300 shadow-sm" : "text-slate-400"}`}>
+                        <Moon size={16} />
+                    </span>
+                </button>
                 {/* Notification Bell */}
                 <div ref={notificationRef} className="relative">
                     <motion.button
@@ -199,7 +224,7 @@ export default function Topbar({ user, role = "User" }) {
                         whileHover={{ scale: 1.15 }}
                         whileTap={{ scale: 0.85 }}
                         transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                        className="relative rounded-full border border-slate-200/70 bg-white/80 p-2 text-slate-700 hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 backdrop-blur-[6px]"
+                        className="relative rounded-full border border-slate-200/0 bg-white/0 p-2 text-slate-700 hover:bg-white/0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 backdrop-blur-[6px]"
                     >
                         <Bell size={20} />
                         {unreadCount > 0 && (

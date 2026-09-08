@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { collection, addDoc, getDocs, query, orderBy, serverTimestamp, deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/services/firebases";
 import { toast } from "react-hot-toast";
-import { Plus, Trash2, Save, X, Info, Zap, Bell, Sparkles, PrinterCheck, Database, CloverIcon, PartyPopperIcon, Flame, Bot, Send, Calendar, Pen, Paperclip, PrinterIcon, CloudSyncIcon, FlagTriangleLeft, History } from "lucide-react";
+import { Plus, Trash2, Save, X, Info, Zap, Bell, Sparkles, PrinterCheck, Database, CloverIcon, PartyPopperIcon, Flame, Bot, Send, Calendar, Pen, Paperclip, PrinterIcon, CloudSyncIcon, FlagTriangleLeft, History, Brain, Notebook } from "lucide-react";
 
 const ICON_OPTIONS = [
     { name: "Zap", icon: <Zap size={16} /> },
@@ -24,6 +24,9 @@ const ICON_OPTIONS = [
     { name: "CloudSyncIcon", icon: <CloudSyncIcon size={16} /> },
     { name: "FlagTriangleLeft", icon: <FlagTriangleLeft size={16} /> },
     { name: "History", icon: <History size={16} /> },
+    { name: "Brain", icon: <Brain size={16} /> },
+    { name: "Notebook", icon: <Notebook size={16} /> },
+    
 ];
 
 export default function UpdateLogSection() {
@@ -108,11 +111,11 @@ export default function UpdateLogSection() {
     };
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-sm text-gray-800 border border-gray-100">
-            <div className="flex justify-between items-center mb-8">
+        <div className="bg-white p-4 rounded-xl shadow-sm text-gray-800 border border-gray-100 sm:p-6">
+            <div className="flex flex-col gap-3 mb-8 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 className="text-xl font-bold text-gray-900">Manajemen Update Log</h2>
-                    <p className="text-sm text-gray-500">Kelola riwayat pembaruan sistem yang akan tampil di modal "What's New".</p>
+                    <p className="text-sm text-gray-500">Kelola riwayat pembaruan sistem yang akan tampil di modal pembaruan.</p>
                 </div>
                 <button
                     onClick={() => setIsAdding(!isAdding)}
@@ -125,7 +128,7 @@ export default function UpdateLogSection() {
 
             {isAdding && (
                 <div className="mb-10 p-6 bg-gray-50 rounded-xl border border-gray-200 animate-in fade-in slide-in-from-top-4 duration-300">
-                    <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div className="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-2">
                         <div>
                             <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Versi</label>
                             <input
@@ -151,7 +154,7 @@ export default function UpdateLogSection() {
                     <div className="space-y-4 mb-6">
                         <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider">Item Perubahan</label>
                         {newUpdate.items.map((item, index) => (
-                            <div key={index} className="flex gap-3 items-start">
+                            <div key={index} className="flex flex-col gap-3 items-stretch sm:flex-row sm:items-start">
                                 <select
                                     className="px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                                     value={item.icon}

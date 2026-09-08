@@ -20,6 +20,7 @@ import { createSignedUrl } from "@/lib/supabase/createSignedUrl";
 import AdminSidebar from "@/components/dashadmin/AdminSidebar";
 import PegawaiList from "@/components/dashadmin/PegawaiList";
 import PerjadinKotaList from "@/components/dashadmin/PerjadinKotaList";
+import { ArrowUpRight, BriefcaseBusiness, ChevronRight, FileText, Sparkles, Upload, Users } from "lucide-react";
 
 export default function DashadminPage() {
     useInactivityLogout(1800000); // 30 minutes auto logout
@@ -37,11 +38,19 @@ export default function DashadminPage() {
     const itemsPerPage = 10;
     const [printModalItem, setPrintModalItem] = useState<any | null>(null);
     const [userProfile, setUserProfile] = useState<any | null>(null);
+    const [overviewStats, setOverviewStats] = useState({ perjadin: 0, kwitansi: 0, visum: 0, pegawai: 0 });
+    const [activityFeed, setActivityFeed] = useState<any[]>([]);
+    const [loginHistory, setLoginHistory] = useState<any[]>([]);
+    const [today, setToday] = useState("");
 
     // Modal State for Pegawai
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [selectedPegawai, setSelectedPegawai] = useState<Pegawai | null>(null); // null means "Add", object means "Edit"
+
+    useEffect(() => {
+        setToday(new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric" }).format(new Date()));
+    }, []);
 
     useEffect(() => {
         const unsubscribeAuth = onAuthStateChanged(auth, async (u) => {
@@ -91,6 +100,42 @@ export default function DashadminPage() {
         });
         return () => unsubscribeAuth();
     }, [router]);
+
+    useEffect(() => {
+        const fetchOverviewStats = async () => {
+          if (!user?.uid && !user?.email) return;
+    
+          try {
+            const [pegawaiSnapshot, notificationSnapshot] = await Promise.all([
+              getDocs(collection(db, "pegawai")),
+              getDocs(query(collection(db, "notifications"), orderBy("createdAt", "desc")))
+            ]);
+    
+            setOverviewStats((prev) => ({
+              ...prev,
+              pegawai: pegawaiSnapshot.size
+            }));
+    
+            const allNotifications = notificationSnapshot.docs
+              .map((docItem): any => ({ id: docItem.id, ...docItem.data() }))
+              .sort((a: any, b: any) => {
+                const aTime = a.createdAt?.seconds ?? 0;
+                const bTime = b.createdAt?.seconds ?? 0;
+                return bTime - aTime;
+              });
+
+            const mainActivityLogs = allNotifications.filter((item: any) => item.type !== "login");
+            const loginLogs = allNotifications.filter((item: any) => item.type === "login");
+
+            setActivityFeed(mainActivityLogs.slice(0, 3));
+            setLoginHistory(loginLogs.slice(0, 2));
+          } catch (error) {
+            console.error("Error fetching overview stats:", error);
+          }
+        };
+    
+        fetchOverviewStats();
+      }, [user?.uid, user?.email]);
 
     // Fetch Data (Perjadin or Pegawai)
     useEffect(() => {
@@ -351,18 +396,86 @@ export default function DashadminPage() {
         />
 
             {/* Main area */}
-            <div className="flex-1 flex flex-col min-h-screen relative">
+            <div className="min-w-0 flex-1 flex flex-col min-h-screen relative">
                 {/* Topbar */}
                 <Topbar user={user} role="Admin" />
 
-                {/* Content - Ensure it takes remaining height */}
-                <main className="flex-1 p-6 flex flex-col">
+                {/* Catatan : Riwayat pengguna saat login admin tidak tampil di dash admin tetapi di dash user riwayat pengguna aktivitas login tampil. */}
+
+                {/* Content - Ensure it takes remaining height  khusus Overview ada catatan untuk di perbaiki*/}
+                <main className="flex-1 p-4 flex flex-col sm:p-6">
                     <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col">
                         {activeTab === "overview" && (
-                            <div className="col-span-1">
-                                <div className="p-9 bg-white rounded shadow h-20 flex items-center justify-center text-gray-800">
-                                    <p>Selamat Datang</p>
-                                </div>
+                            <div className="space-y-5 pb-6">
+                                <section className="relative overflow-hidden rounded-[2rem] bg-yellow-700 px-6 py-7 text-white shadow-xl shadow-slate-900/10 sm:px-9 sm:py-8">
+                                    <div className="absolute -right-16 -top-24 h-64 w-64 rounded-full border border-cyan-300/20" />
+                                    <div className="absolute -right-2 -top-10 h-48 w-48 rounded-full border border-cyan-300/10" />
+                                    <div className="relative flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
+                                        <div>
+                                            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-green-500">Dashboard administrasi</p>
+                                            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Selamat datang, {userProfile?.name || user?.displayName || "Admin"}</h1>
+                                            <p className="mt-2 text-sm text-slate-300">Ringkasan aktivitas administrasi hari ini</p>
+                                        </div>
+                                        <time className="shrink-0 text-sm font-medium text-slate-300">{today}</time>
+                                    </div>
+                                </section>
+
+                                <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                                    {[
+                                        { label: "Perjadin Kota", value: "0", icon: BriefcaseBusiness, tone: "bg-cyan-50 text-cyan-700" },
+                                        { label: "Kwitansi", value: "0", icon: FileText, tone: "bg-amber-50 text-amber-700" },
+                                        { label: "Visum", value: "0", icon: Upload, tone: "bg-emerald-50 text-emerald-700" },
+                                        { label: "Pegawai", value: String(overviewStats.pegawai), icon: Users, tone: "bg-violet-50 text-violet-700" },
+                                    ].map(({ label, value, icon: Icon, tone }) => (
+                                        <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                                            <div className={`mb-5 flex h-9 w-9 items-center justify-center rounded-xl ${tone}`}><Icon size={17} /></div>
+                                            <p className="text-xs font-medium text-slate-500">{label}</p>
+                                            <p className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">{value}</p>
+                                        </div>
+                                    ))}
+                                </section>
+
+                                <section className="grid gap-5 xl:grid-cols-[1.45fr_0.8fr]">
+                                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                                        <div className="mb-5 flex items-center justify-between"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Aktivitas</p><h2 className="mt-1 text-lg font-semibold text-slate-900">Riwayat Aktivitas</h2></div><ArrowUpRight size={18} className="text-slate-400" /></div>
+                                        <div className="max-h-60 space-y-4 overflow-y-auto pr-1 text-sm text-slate-600">
+                                            {activityFeed.length > 0 ? activityFeed.map((activity, index) => (
+                                                <div key={activity.id || index} className="flex items-center gap-3">
+                                                    <span className={`h-2 w-2 rounded-full ${index === 0 ? "bg-cyan-500" : index === 1 ? "bg-amber-500" : "bg-emerald-500"}`} />
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="truncate text-sm font-medium text-slate-700">{activity.title}</p>
+                                                        <p className="text-[11px] text-slate-500">{activity.message}</p>
+                                                    </div>
+                                                    <span className="ml-auto shrink-0 text-[10px] text-slate-400">{activity.createdAt?.seconds ? new Date(activity.createdAt.seconds * 1000).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }) : "Baru"}</span>
+                                                </div>
+                                            )) : (
+                                                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-center text-sm text-slate-500">Belum ada riwayat aktivitas.</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Riwayat pengguna</p>
+                                        <h2 className="mt-1 text-lg font-semibold text-slate-900">Aktivitas login</h2>
+                                        <div className="mt-5 max-h-52 space-y-3 overflow-y-auto pr-1">
+                                            {loginHistory.length > 0 ? loginHistory.map((activity, index) => (
+                                                <div key={`activity-${activity.id || index}`} className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+                                                    <span className={`mt-1 h-2.5 w-2.5 rounded-full ${index % 2 === 0 ? "bg-cyan-500" : "bg-violet-500"}`} />
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-sm font-medium text-slate-800">{activity.userName || activity.userEmail || "System"}</p>
+                                                        <p className="mt-1 text-xs text-slate-600">{activity.message || activity.title}</p>
+                                                        <p className="mt-1 text-[10px] text-slate-400">{activity.createdAt?.seconds ? new Date(activity.createdAt.seconds * 1000).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }) : "Baru"}</p>
+                                                    </div>
+                                                </div>
+                                            )) : (
+                                                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-center text-sm text-slate-500">Belum ada aktivitas login.</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <section className="rounded-2xl border border-cyan-100 bg-cyan-50/70 p-5 sm:p-6"><div className="flex flex-col gap-4 sm:flex-row sm:items-center"><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-cyan-500 text-white"><Sparkles size={20} /></div><div className="flex-1"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-700">Informasi Sistem</p><h2 className="mt-1 font-semibold text-slate-900">Update v2.4</h2><p className="mt-1 text-sm text-slate-600">AI Auto Fill Surat Undangan sekarang tersedia</p></div><button onClick={() => setActiveTab("update-log")} className="flex shrink-0 items-center gap-1 text-sm font-semibold text-cyan-700 hover:text-cyan-900">Lihat detail <ChevronRight size={16} /></button></div></section>
+
+                                <section><p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Panduan Singkat</p><div className="grid gap-3 md:grid-cols-3">{["Cara membuat Perjadin", "Upload surat dengan AI", "Generate laporan"].map((guide) => <button key={guide} onClick={() => setActiveTab("perjadin-umum-dalam-kota")} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left text-sm font-medium text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-300 hover:text-cyan-700"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-cyan-600"><ChevronRight size={15} /></span>{guide}</button>)}</div></section>
                             </div>
                         )}
 
@@ -474,3 +587,4 @@ export default function DashadminPage() {
         </div>
     );
 }
+

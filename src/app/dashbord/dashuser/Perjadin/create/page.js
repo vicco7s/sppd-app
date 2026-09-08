@@ -4,9 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { auth, db } from "@/services/firebases";
-import { collection, getDocs, doc, setDoc, query, where, addDoc, serverTimestamp, getDoc } from "firebase/firestore";
+import { collection, getDocs, doc, setDoc, updateDoc, query, where, addDoc, serverTimestamp, getDoc } from "firebase/firestore";
 import toast from "react-hot-toast";
 import PerjadinForm from '@/components/PerjadinForm';
+import { uploadFile } from '@/lib/supabase/uploadFile';
+import { createSignedUrl } from '@/lib/supabase/createSignedUrl';
 
 const CreatePerjadin = () => {
   const router = useRouter();
@@ -72,6 +74,8 @@ const CreatePerjadin = () => {
     }
 
     try {
+      const { pendingFile, ...perjadinData } = formData;
+
       // Check for duplicate number
       const q = query(collection(db, "perjadinkota"), where("no", "==", formData.no));
       const querySnapshot = await getDocs(q);
@@ -84,11 +88,22 @@ const CreatePerjadin = () => {
 
       const newDocRef = doc(collection(db, "perjadinkota"));
       await setDoc(newDocRef, {
-        ...formData,
+        ...perjadinData,
         id: newDocRef.id,
         createdAt: new Date(),
         updatedAt: new Date()
       });
+
+      if (pendingFile) {
+        const uploadedFile = await uploadFile(pendingFile, 'surat-undangan');
+        const suratUrl = await createSignedUrl(uploadedFile.path);
+        await updateDoc(newDocRef, {
+          suratUrl,
+          suratPath: uploadedFile.path,
+          suratFileName: uploadedFile.fileName,
+          updatedAt: new Date()
+        });
+      }
 
       // Create Notification
       try {

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/services/firebases";
 import { signInWithEmailAndPassword, User as AuthUser } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, serverTimestamp } from "firebase/firestore";
 import toast from "react-hot-toast";
 import { User as DbUser } from "@/types";
 
@@ -67,6 +67,22 @@ export default function LoginPage() {
           setError("Akun Anda telah dinonaktifkan. Silakan hubungi admin.");
           return;
         }
+
+        try {
+          await addDoc(collection(db, "notifications"), {
+            title: "Login",
+            message: `${userData.name || user.email || "User"} login pada ${new Date().toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}.`,
+            type: "login",
+            userName: userData.name || user.email || "User",
+            userEmail: user.email || "-",
+            userUid: user.uid,
+            createdAt: serverTimestamp(),
+            isRead: false
+          });
+        } catch (loginErr) {
+          console.error("Failed to record login activity:", loginErr);
+        }
+
         if (userData.role === "admin") {
           router.replace("/dashbord/dashadmin");
         } else {
@@ -101,8 +117,8 @@ export default function LoginPage() {
           <LoginCard>
             <div className="mb-8">
               <div className="mb-10 flex items-center gap-2 text-sm font-bold text-slate-900">
-                <span className="h-2 w-2 rounded-full bg-indigo-600" />
-                Version 4.1.1 Gemini x GLM
+                <span className="h-2 w-2 rounded-full bg-yellow-600" />
+                Version 4.2.0 Gemini x GLM AI
               </div>
               <h1 className="text-3xl font-bold tracking-tight text-slate-900">
                 Masuk ke akun Anda
@@ -123,17 +139,17 @@ export default function LoginPage() {
 
         <div className="relative hidden min-h-[620px] overflow-hidden bg-slate-100 lg:block">
           <img
-            src="https://i.pinimg.com/736x/f6/4b/ea/f64bea7dbdecea42e706d76486a90e0f.jpg"
+            src="https://i.pinimg.com/1200x/f9/db/df/f9dbdf50e8c859e059b9d4e0d6c31124.jpg"
             alt="Ilustrasi halaman login"
             className="absolute inset-0 h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/45 via-transparent to-transparent" />
           <div className="absolute bottom-10 left-10 max-w-sm text-white">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/70">
-              Coming Soon
+              Coming Soon...
             </p>
             <p className="mt-3 text-2xl font-semibold leading-tight">
-              Version 5.0
+              5.0 Solution
             </p>
           </div>
         </div>

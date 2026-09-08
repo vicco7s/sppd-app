@@ -88,7 +88,7 @@ export default function UpdateNotificationModal() {
                     >
                         {/* Inner highlight line at top */}
                         <div
-                            className="absolute inset-x-8 top-0 h-1 rounded-b-full bg-blue-600"
+                            className="absolute inset-x-8 top-0 h-1 rounded-b-full bg-yellow-600"
                         />
 
                         {/* ─────── HEADER ─────── */}
@@ -117,7 +117,7 @@ export default function UpdateNotificationModal() {
                                         <div
                                             className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 shadow-lg shadow-blue-600/20"
                                             style={{
-                                                background: "#002fb1",
+                                                background: "#b16400ff",
                                             }}
                                         >
                                             <Sparkles className="text-white" size={20} />
@@ -125,7 +125,7 @@ export default function UpdateNotificationModal() {
                                         {/* Glow under icon */}
                                         <div
                                             className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-3 rounded-full"
-                                            style={{ background: "rgba(139,92,246,0.5)", filter: "blur(6px)" }}
+                                            style={{ background: "#b16400ff", filter: "blur(6px)" }}
                                         />
                                     </motion.div>
 
@@ -144,12 +144,12 @@ export default function UpdateNotificationModal() {
                                                 }}
                                             >
                                                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                                                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700">
+                                                <span className="text-[10px] font-bold uppercase tracking-wider text-yellow-700">
                                                     {latestUpdate.version || "v3.0"}
                                                 </span>
                                             </div>
                                             {/* Date pill */}
-                                            <div className="flex items-center gap-1 px-2 py-1 rounded-full" style={{ background: "#002fb1" }}>
+                                            <div className="flex items-center gap-1 px-2 py-1 rounded-full" style={{ background: "#b16400ff" }}>
                                                 <Calendar size={10} className="text-slate-400 text-white" />
                                                 <span className="text-[10px] font-medium text-slate-500 text-white">
                                                     {latestUpdate.date || "Terbaru"}
@@ -168,7 +168,7 @@ export default function UpdateNotificationModal() {
                                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
                                     className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-700"
                                     style={{
-                                        background: "#fafafa",
+                                        background: "#fafafaff",
                                     }}
                                 >
                                     <X size={16} />
@@ -181,8 +181,8 @@ export default function UpdateNotificationModal() {
                                     background: "#f1f5f9",
                                 }}
                             >
-                                <Bot size={12} className="text-indigo-600" />
-                                <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500">New AI Gemini 3.1 Flash Lite and GLM 4.7 Flash</span>
+                                <Bot size={12} className="text-yellow-600" />
+                                <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500">New AI Gemini 3.1 Flash and GLM 4.7 Flash</span>
                             </div>
                         </div>
 
@@ -194,7 +194,7 @@ export default function UpdateNotificationModal() {
                             <div className="space-y-3 pb-4">
                                 {/* Latest update label */}
                                 <div className="flex items-center gap-2 mb-3 px-1">
-                                    <div className="h-3 w-1 rounded-full bg-indigo-600" />
+                                    <div className="h-3 w-1 rounded-full bg-yellow-600" />
                                     <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
                                         Fitur &amp; Pembaruan
                                     </span>
@@ -262,7 +262,7 @@ export default function UpdateNotificationModal() {
                                     style={{ boxShadow: "0 0 6px #34d399" }}
                                 />
                                 <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
-                                    {latestUpdate.version || "v3.0.0.stable"} Beta
+                                    {latestUpdate.version || "v3.0.0.stable"} Stable
                                 </span>
                             </div>
 
@@ -275,7 +275,7 @@ export default function UpdateNotificationModal() {
                                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
                                 className="group relative flex items-center gap-2 overflow-hidden rounded-lg bg-slate-900 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-blue-700"
                                 style={{
-                                    background: "#002fb1",
+                                    background: "#b16400ff",
                                 }}
                             >
                                 <span className="relative z-10">Tutup</span>

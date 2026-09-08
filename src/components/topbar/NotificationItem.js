@@ -4,7 +4,7 @@ import { getNotificationIcon, getNotificationColor, formatNotificationDate } fro
 
 export default function NotificationItem({ notification }) {
   return (
-    <div className="rounded-[20px] border border-slate-200/70 bg-white/70 p-4 transition duration-200 hover:bg-white/80 hover:shadow-[0_12px_40px_rgba(15,23,42,0.1)] backdrop-blur-[6px]">
+    <div className="notification-item rounded-[20px] border border-slate-200/70 bg-white/70 p-4 transition duration-200 hover:bg-white/80 hover:shadow-[0_12px_40px_rgba(15,23,42,0.1)] backdrop-blur-[6px]">
       <div className="flex gap-3">
         <div className={`flex h-10 w-10 items-center justify-center shrink-0 rounded-full ${getNotificationColor(notification.type)} relative`}>
           {getNotificationIcon(notification.type)}

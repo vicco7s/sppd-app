@@ -69,7 +69,7 @@ export default function LoginForm({ onSubmit, loading, onForgotPassword, error }
         </button>
         <span className="text-[13px] text-slate-400">
           Belum punya akun?{" "}
-          <a href="#" className="font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">
+          <a href="#" className="font-semibold text-yellow-600 hover:text-indigo-700 transition-colors">
             Sign up
           </a>
         </span>

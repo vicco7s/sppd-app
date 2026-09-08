@@ -7,6 +7,8 @@ import { collection, getDocs, doc, getDoc, updateDoc, query, where, addDoc, serv
 import toast from "react-hot-toast";
 import PerjadinForm from '@/components/PerjadinForm';
 import { auth, db } from "@/services/firebases";
+import { uploadFile } from '@/lib/supabase/uploadFile';
+import { createSignedUrl } from '@/lib/supabase/createSignedUrl';
 
 const EditPerjadinPage = () => {
   const router = useRouter();
@@ -114,6 +116,8 @@ const EditPerjadinPage = () => {
     }
 
     try {
+      const { pendingFile, ...perjadinData } = formData;
+
       // Check for duplicate number (excluding this document)
       const q = query(collection(db, "perjadinkota"), where("no", "==", formData.no));
       const querySnapshot = await getDocs(q);
@@ -131,9 +135,20 @@ const EditPerjadinPage = () => {
 
       const docRef = doc(db, "perjadinkota", id);
       await updateDoc(docRef, {
-        ...formData,
+        ...perjadinData,
         updatedAt: new Date()
       });
+
+      if (pendingFile) {
+        const uploadedFile = await uploadFile(pendingFile, 'surat-undangan');
+        const suratUrl = await createSignedUrl(uploadedFile.path);
+        await updateDoc(docRef, {
+          suratUrl,
+          suratPath: uploadedFile.path,
+          suratFileName: uploadedFile.fileName,
+          updatedAt: new Date()
+        });
+      }
 
       // Create Notification for Update
       try {

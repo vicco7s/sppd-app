@@ -10,17 +10,17 @@ export default function PerjadinKotaList({
 }) {
     return (
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-gray-800 flex-1 flex flex-col min-h-[calc(100vh-180px)]">
-            <div className="flex justify-between items-center mb-6 border-b border-gray-50 pb-4">
-                <h2 className="text-xl font-bold text-gray-900">List Data Perjadin Umum Dalam Kota</h2>
+            <div className="flex flex-col gap-3 mb-6 border-b border-gray-50 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                <h2 className="text-lg font-bold text-gray-900 sm:text-xl">List Data Perjadin Umum Dalam Kota</h2>
                 <button
                     onClick={() => router.push("/dashbord/dashuser/Perjadin/create")}
-                    className="bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-blue-700 transition shadow-sm font-medium"
+                    className="w-full justify-center bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-blue-700 transition shadow-sm font-medium sm:w-auto"
                 >
                     <span className="text-lg">+</span> Tambah Perjadin Baru
                 </button>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="hidden overflow-x-auto md:block">
                 <table className="w-full text-left border-collapse">
                     <thead className="bg-gray-50">
                         <tr>
@@ -130,6 +130,12 @@ export default function PerjadinKotaList({
                         )}
                     </tbody>
                 </table>
+            </div>
+
+            <div className="space-y-3 md:hidden">
+                {loading ? <div className="rounded-xl border border-slate-200 px-4 py-10 text-center text-sm italic text-slate-500">Memuat data...</div> : perjadinList.length === 0 ? <div className="rounded-xl border border-slate-200 px-4 py-10 text-center text-sm italic text-slate-500">Belum ada data perjadin.</div> : paginatedData.map((item, index) => (
+                    <article key={item.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-4"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold text-slate-900">{item.tujuan || "Tujuan belum diisi"}</p><p className="mt-1 text-xs text-slate-500">SPT: {item.noSpt || "-"}</p></div><span className={`shrink-0 rounded-full px-2 py-1 text-xs font-medium ${item.status === "Selesai" ? "bg-green-100 text-green-800" : item.status === "Ditolak" ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}`}>{item.status || "Menunggu"}</span></div><dl className="mt-3 space-y-2 text-xs"><div className="flex justify-between gap-3"><dt className="text-slate-400">Tanggal</dt><dd className="text-right font-medium text-slate-700">{item.tanggalBerangkat || "-"}</dd></div><div className="flex justify-between gap-3"><dt className="text-slate-400">Keperluan</dt><dd className="max-w-[65%] text-right font-medium text-slate-700">{item.perihalSurat || "-"}</dd></div></dl><div className="mt-4 flex flex-wrap gap-2 border-t border-slate-200 pt-3">{item.suratPath && <button onClick={() => handleViewFile(item.suratPath)} className="flex-1 rounded-lg bg-indigo-500 px-3 py-2 text-xs font-semibold text-white" title="Lihat Dokumen"><FileText size={15} className="mx-auto" /></button>}{(!item.status || item.status === "Menunggu") ? <button onClick={() => router.push(`/dashbord/dashuser/Perjadin/edit/${item.id}`)} className="flex-1 rounded-lg bg-amber-500 px-3 py-2 text-xs font-semibold text-white" title="Edit"><Edit size={15} className="mx-auto" /></button> : null}<button onClick={() => setPrintModalItem(item)} className="flex-1 rounded-lg bg-green-500 px-3 py-2 text-xs font-semibold text-white" title="Print"><Printer size={15} className="mx-auto" /></button><button onClick={() => handleDelete(item.id)} className="flex-1 rounded-lg bg-red-500 px-3 py-2 text-xs font-semibold text-white" title="Hapus"><Trash2 size={15} className="mx-auto" /></button></div></article>
+                ))}
             </div>
 
             {/* Pagination Controls */}

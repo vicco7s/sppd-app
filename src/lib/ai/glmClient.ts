@@ -29,8 +29,10 @@ export const generateTextWithGLM = async (
     const data = (await response.json()) as GlmResponse;
 
     if (!response.ok || typeof data.text !== "string") {
+      const retryAfter = response.headers.get("retry-after");
       throw Object.assign(new Error(getErrorMessage(data.error)), {
         status: response.status,
+        retryAfter: retryAfter ? Number(retryAfter) : undefined,
       });
     }
 

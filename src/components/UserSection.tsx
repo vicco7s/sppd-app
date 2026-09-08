@@ -179,11 +179,11 @@ export default function UserSection() {
   const paginatedUsers = users.slice(startIndex, startIndex + itemsPerPage);
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-gray-800 flex-1 flex flex-col min-h-[calc(100vh-180px)]">
+    <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 text-gray-800 flex-1 flex flex-col min-h-[calc(100vh-180px)]">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6 border-b border-gray-50 pb-4">
+      <div className="flex flex-col gap-3 mb-6 border-b border-gray-50 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 sm:text-xl">
             <Users className="text-blue-600" /> Kelola User
           </h2>
           <p className="text-sm text-gray-500 mt-1">Manajemen hak akses dan akun pengguna sistem.</p>
@@ -193,14 +193,14 @@ export default function UserSection() {
             setSelectedUser(null);
             setIsModalOpen(true);
           }}
-          className="bg-blue-600 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 hover:bg-blue-700 transition shadow-lg shadow-blue-200 font-bold text-sm"
+          className="w-full justify-center bg-blue-600 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 hover:bg-blue-700 transition shadow-lg shadow-blue-200 font-bold text-sm sm:w-auto"
         >
           <UserPlus size={18} /> Tambah User
         </button>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto flex-1">
+      <div className="hidden overflow-x-auto flex-1 md:block">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-50/50">
@@ -314,6 +314,16 @@ export default function UserSection() {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="space-y-3 md:hidden">
+        {loading ? <div className="rounded-xl border border-slate-200 px-4 py-10 text-center text-sm italic text-slate-400">Memuat data user...</div> : users.length === 0 ? <div className="rounded-xl border border-slate-200 px-4 py-10 text-center text-sm italic text-slate-400">Belum ada data user.</div> : paginatedUsers.map((user) => (
+          <article key={user.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+            <div className="flex items-start gap-3"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 font-bold text-xs">{getPegawaiName(user.idPegawai).charAt(0)}</div><div className="min-w-0"><p className="truncate font-semibold text-slate-900">{getPegawaiName(user.idPegawai)}</p><p className="truncate text-xs text-slate-500">{user.email}</p></div></div>
+            <div className="mt-3 flex flex-wrap gap-2"><span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-bold text-blue-700">{user.role}</span><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${user.status === "active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{user.status === "active" ? "Aktif" : "Nonaktif"}</span><span className="text-xs text-slate-400">{formatDate(user.createdAt)}</span></div>
+            <div className="mt-4 grid grid-cols-4 gap-2 border-t border-slate-200 pt-3"><button onClick={() => handleToggleStatus(user)} className={`rounded-lg px-2 py-2 text-white ${user.status === "active" ? "bg-amber-500" : "bg-red-500"}`} title="Ubah status"><Power size={15} className="mx-auto" /></button><button onClick={() => { setSelectedUser(user); setIsModalOpen(true); }} className="rounded-lg bg-blue-500 px-2 py-2 text-white" title="Edit Role"><Edit size={15} className="mx-auto" /></button><button onClick={() => handleResetPassword(user.email)} className="rounded-lg bg-green-500 px-2 py-2 text-white" title="Reset Password"><Key size={15} className="mx-auto" /></button><button onClick={() => handleDeleteUser(user.id)} className="rounded-lg bg-red-500 px-2 py-2 text-white" title="Hapus User"><Trash2 size={15} className="mx-auto" /></button></div>
+          </article>
+        ))}
       </div>
 
       {/* Pagination */}

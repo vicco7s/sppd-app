@@ -14,7 +14,7 @@ export default function LoginButton({ loading, children }) {
       className="relative w-full group overflow-hidden rounded-xl py-3.5 mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
     >
       {/* Background Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-indigo-500 to-indigo-700 transition-opacity duration-300 group-hover:opacity-90"></div>
+      <div className="absolute inset-0 bg-gradient-to-b from-yellow-500 to-yellow-700 transition-opacity duration-300 group-hover:opacity-90"></div>
       
       {/* Subtle Inner Highlight */}
       <div className="absolute inset-0 border border-white/20 rounded-xl pointer-events-none"></div>

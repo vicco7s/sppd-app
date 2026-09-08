@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { AlertCircle, RefreshCw, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { uploadFile } from '@/lib/supabase/uploadFile';
-import { createSignedUrl } from '@/lib/supabase/createSignedUrl';
 import { parseSuratWithGemini } from '@/lib/ai/parseSuratWithGemini';
 import { validateUploadFile } from '@/lib/utils/validateUploadFile';
 import { compressImage } from '@/utils/compressImage';
@@ -12,7 +10,6 @@ import UploadDropzone from './UploadDropzone';
 
 const UploadSuratAI = ({ onDataExtracted, currentData, isNotaDinas = false }) => {
   const [file, setFile] = useState(null);
-  const [isUploading, setIsUploading] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
   const [error, setError] = useState(null);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -63,33 +60,20 @@ const UploadSuratAI = ({ onDataExtracted, currentData, isNotaDinas = false }) =>
   };
 
   const processDocument = async (selectedFile) => {
-    setIsUploading(true);
     setIsParsing(true);
     
     try {
-      // Parallel upload to Supabase and AI parsing
-      // Using 'surat-undangan' folder as default
-      const [supabaseData, extractedData] = await Promise.all([
-        uploadFile(selectedFile, 'surat-undangan'),
-        parseSuratWithGemini(selectedFile)
-      ]);
+      const extractedData = await parseSuratWithGemini(selectedFile);
       
-      if (extractedData && supabaseData) {
-        // Generate a signed URL for immediate use/preview
-        const signedUrl = await createSignedUrl(supabaseData.path);
-        
-        // Combine extraction data with Supabase file info
-        // We keep the fields requested: suratUrl, suratPath, suratFileName
+      if (extractedData) {
         const finalData = {
           ...extractedData,
-          suratUrl: signedUrl, // Signed URL for the session
-          suratPath: supabaseData.path,
-          suratFileName: supabaseData.fileName
+          pendingFile: selectedFile
         };
         
         onDataExtracted(finalData);
         setIsSuccess(true);
-        toast.success('Dokumen berhasil diunggah dan dianalisis AI!');
+        toast.success('Dokumen berhasil dianalisis AI. File akan diunggah saat data disimpan.');
       } else {
         throw new Error('Gagal memproses data atau upload file.');
       }
@@ -98,7 +82,6 @@ const UploadSuratAI = ({ onDataExtracted, currentData, isNotaDinas = false }) =>
       setError(err.message || 'Gagal memproses dokumen.');
       toast.error('Gagal memproses dokumen. Silakan coba lagi.');
     } finally {
-      setIsUploading(false);
       setIsParsing(false);
     }
   };

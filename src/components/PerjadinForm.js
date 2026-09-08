@@ -65,6 +65,7 @@ const PerjadinForm = ({ onSubmit, isSubmitting, initialData = null, pegawaiList 
             suratUrl: extractedData.suratUrl || prev.suratUrl,
             suratPath: extractedData.suratPath || prev.suratPath,
             suratFileName: extractedData.suratFileName || prev.suratFileName,
+            pendingFile: extractedData.pendingFile || prev.pendingFile,
         }));
     };
 

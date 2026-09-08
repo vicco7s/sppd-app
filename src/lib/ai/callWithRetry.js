@@ -54,9 +54,12 @@ export const generateContentWithRetry = async (prompt, retryCount = 1) => {
     } catch (err) {
         if (retryCount < MAX_RETRIES && isRetryableError(err)) {
             const isRateLimited = String(err?.status || err?.code || err?.error?.status || "").includes("429");
-            const delay = isRateLimited
-                ? Math.min(5000 * Math.pow(2, retryCount - 1), 20000)
-                : Math.min(1000 * Math.pow(2, retryCount), 8000);
+            const providerDelay = Number(err?.retryAfter);
+            const delay = isRateLimited && Number.isFinite(providerDelay) && providerDelay > 0
+                ? providerDelay * 1000
+                : isRateLimited
+                    ? Math.min(8000 * Math.pow(2, retryCount - 1), 30000)
+                    : Math.min(1000 * Math.pow(2, retryCount), 8000);
             console.warn(
                 `[AI Retry] ${retryCount}/${MAX_RETRIES} after ${delay}ms:`,
                 err?.message || err

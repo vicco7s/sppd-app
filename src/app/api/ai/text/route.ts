@@ -62,7 +62,12 @@ export async function POST(request: Request) {
 
       return NextResponse.json(
         { error: errorMessage },
-        { status: response.status || 502 }
+        {
+          status: response.status || 502,
+          headers: response.headers.get("retry-after")
+            ? { "Retry-After": response.headers.get("retry-after") as string }
+            : undefined,
+        }
       );
     }
 

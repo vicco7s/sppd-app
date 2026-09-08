@@ -223,7 +223,7 @@ export default function KwitansiSection({ isAdmin = false, userProfile = null })
 
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-gray-800 flex-1 flex flex-col min-h-[calc(100vh-180px)]">
+    <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 text-gray-800 flex-1 flex flex-col min-h-[calc(100vh-180px)] sm:p-6">
       {/* <div className="mb-6">
         <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">Manajemen Kwitansi</h2>
         <p className="text-sm text-gray-500 mt-1">Kelola seluruh data kwitansi pengeluaran perjalanan dinas secara terpusat.</p>
