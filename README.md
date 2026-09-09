@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 📄 SPPD App (Sistem Informasi Perjalanan Dinas)
 
-## Getting Started
+Aplikasi manajemen Surat Perintah Perjalanan Dinas (SPPD) berbasis web untuk mempermudah proses administratif, pembuatan persuratan, dan operasional instansi secara digital. Dibangun dengan fokus pada kecepatan dan efisiensi pengolahan data.
 
-First, run the development server:
+## 📸 Cuplikan Aplikasi
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Berikut adalah tampilan antarmuka dari aplikasi SPPD:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+<div align="center">
+  <img src="https://www.dropbox.com/scl/fi/qhalhzifbkcdzpt9n530b/iPhone-14-PRO-sppd-app-git-master-vicco7s-projects.vercel.app-1.png?rlkey=okfsa4gy2mq85kofmys1im3zz&st=qxkvrd2z&raw=1" alt="Dashboard Utama" width="32%">
+  <img src="https://www.dropbox.com/scl/fi/227wdtzfpk3w3fz9i319t/iPhone-14-PRO-sppd-app-git-master-vicco7s-projects.vercel.app.png?rlkey=un3a29dsoak8ag94fzbb804vd&st=36bmj662&raw=1" alt="Form SPPD" width="32%">
+  <img src="https://www.dropbox.com/scl/fi/0lvnxsyhxkobimjbzk6n5/Macbook-Air-sppd-app-git-master-vicco7s-projects.vercel.app.png?rlkey=icdkogbclc9v7a2916393wgw1&st=ruo30n2f&raw=1" alt="Detail Pengguna" width="32%">
+</div>
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🎥 Demo Video
 
-## Learn More
+Klik gambar di bawah ini untuk melihat bagaimana aplikasi bekerja:
 
-To learn more about Next.js, take a look at the following resources:
+[![Demo Aplikasi SPPD](https://www.dropbox.com/scl/fi/0lvnxsyhxkobimjbzk6n5/Macbook-Air-sppd-app-git-master-vicco7s-projects.vercel.app.png?rlkey=icdkogbclc9v7a2916393wgw1&st=ruo30n2f&raw=1)](https://www.dropbox.com/scl/fi/x2xpjp8h2ljzvprcln5ts/demo-webapp.mp4?rlkey=36vekna9w0kwelx1hzh0fztzj&st=hylvij9z&dl=0)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+> *Video akan terbuka di halaman Dropbox.*
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🚀 Fitur Utama
 
-## Deploy on Vercel
+- **Manajemen Persuratan Efisien:** Pembuatan dan pelacakan SPPD secara real-time.
+- **Automasi Cerdas:** Memanfaatkan AI untuk menstrukturkan data JSON dan mempercepat pemrosesan formulir.
+- **Desain Responsif:** Antarmuka modern yang nyaman digunakan di berbagai ukuran layar.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🛠️ Tech Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Framework:** Next.js, JavaScript (dalam tahap migrasi ke TypeScript)
+- **Styling:** Tailwind CSS
+- **Database & BaaS:** Supabase & Firebase
+- **AI Integrations:** Google Gemini 2.5 Flash, DeepSeek API (via OpenRouter)
+- **Deployment:** Vercel
+
+## ⚙️ Menjalankan di Komputer Lokal
+
+1. Clone repositori ini:
+   ```bash
+   git clone [https://github.com/vicco7s/sppd-app.git](https://github.com/vicco7s/sppd-app.git)
