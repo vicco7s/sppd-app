@@ -43,8 +43,12 @@ export default function WarningPage() {
 					Web-App Tidak dapat Diakses karna keterbatasan informasi dan tidak dapat
 					di gunakan jika ingin menggunakan lagi silahkan hubungi yang
 					bersangkutan dengan menekan tombol hijau menuju whatsapp jika tidak diperlukan otomatis web akan nonaktifkan.
-                    <br / > <p style={{color:"#261cb9"}}>Last Update 13 Oktober 2026 V4.3.0 </p>
 				</p>
+				<p style={{color:"#261cb9",fontSize: "clamp(22px, 4vw, 25px)",
+						fontWeight: 700,
+						lineHeight: 1.5,
+						margin: "0 0 36px",}}>Last Update 13 Oktober 2026 V4.3.0 </p>
+				<p></p>
 				<a
 					href={`https://wa.me/${whatsappNumber}`}
 					style={{
