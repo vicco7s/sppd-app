@@ -5,7 +5,7 @@ export default function WarningPage() {
 		<main
 			style={{
 				alignItems: "center",
-				background: "#55d7ff",
+				background: "#cacaca",
 				boxSizing: "border-box",
 				color: "#1f2937",
 				display: "flex",
@@ -30,7 +30,7 @@ export default function WarningPage() {
 						margin: "0 0 24px",
 					}}
 				>
-					WEB NO AKSES
+					Mohon Maaf, Akses Ditutup
 				</h1>
 				<p
 					style={{
@@ -40,14 +40,12 @@ export default function WarningPage() {
 						margin: "0 0 36px",
 					}}
 				>
-					Web-App Tidak dapat Diakses karna keterbatasan informasi dan tidak dapat
-					di gunakan jika ingin menggunakan lagi silahkan hubungi yang
-					bersangkutan dengan menekan tombol hijau menuju whatsapp jika tidak diperlukan otomatis web akan nonaktifkan.
+					Aplikasi ini belum dapat digunakan saat ini. Jika Anda masih membutuhkannya, silakan hubungi yang bersangkutan melalui tombol WhatsApp Hijau di bawah ini. Bila tidak ada, aplikasi akan nonaktifkan secara otomatis.
 				</p>
 				<p style={{color:"#261cb9",fontSize: "clamp(22px, 4vw, 25px)",
 						fontWeight: 700,
 						lineHeight: 1.5,
-						margin: "0 0 36px",}}>Last Update 13 Oktober 2026 V4.3.0 </p>
+						margin: "0 0 36px",}}>Last Update 13 Oktober 2026 - Retired</p>
 				<p></p>
 				<a
 					href={`https://wa.me/${whatsappNumber}`}
