@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef, type FormEvent } from "react";
 import {
   Briefcase, User, CreditCard, DollarSign, Calendar, Info,
   ChevronRight, Plus, X, Landmark, PenBox, Search, Trash2,
-  Sparkles, WandSparkles,
+  Sparkles, WandSparkles, Check,
 } from "lucide-react";
 import type { Pegawai } from "@/types/index";
 import {
@@ -34,6 +34,14 @@ interface KodeRekeningOption {
   createdAt?: unknown;
 }
 
+/** Satu penerima kwitansi (satu halaman PDF per penerima) */
+interface PenerimaItem {
+  id: string;
+  nama?: string;
+  rek?: string;
+  bank?: string;
+}
+
 interface FormData {
   accountOptionId: string;
   program: string;
@@ -41,6 +49,7 @@ interface FormData {
   subKegiatan: string;
   kodeRekening: string;
   namaRekeningBelanja: string;
+  penerimaList: PenerimaItem[];
   pegawaiId: string;
   namaRekening: string;
   nomorRekening: string;
@@ -73,6 +82,7 @@ const INITIAL_FORM_DATA: FormData = {
   subKegiatan: "",
   kodeRekening: "",
   namaRekeningBelanja: "",
+  penerimaList: [],
   pegawaiId: "",
   namaRekening: "",
   nomorRekening: "",
@@ -163,7 +173,9 @@ export default function KwitansiForm({
 
   useEffect(() => {
     if (editingData) {
-      setFormData(editingData as unknown as FormData);
+      const data = editingData as unknown as FormData;
+      // Data lama (sebelum multi-penerima) belum punya penerimaList
+      setFormData({ ...data, penerimaList: data.penerimaList || [] });
     } else {
       setFormData(INITIAL_FORM_DATA);
     }
@@ -196,8 +208,26 @@ export default function KwitansiForm({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handlePegawaiChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, pegawaiId: value }));
+  // Multi-pilih penerima: klik untuk menambah/menghapus dari daftar
+  const togglePegawai = (pegawai: PenerimaItem) => {
+    setFormData((prev) => {
+      const list = prev.penerimaList || [];
+      const exists = list.some((p) => p.id === pegawai.id);
+      const penerimaList = exists
+        ? list.filter((p) => p.id !== pegawai.id)
+        : [...list, { id: pegawai.id, nama: pegawai.nama || "", rek: pegawai.rek || "", bank: pegawai.bank || "" }];
+
+      // Field lama tetap diisi penerima pertama agar tabel & validasi tidak berubah
+      const first = penerimaList[0];
+      return {
+        ...prev,
+        penerimaList,
+        pegawaiId: first?.id || "",
+        namaRekening: first?.nama || "",
+        nomorRekening: first?.rek || "",
+        namaBank: first?.bank || "",
+      };
+    });
   };
 
   const handleGenerateKeperluan = async () => {
@@ -439,7 +469,7 @@ export default function KwitansiForm({
 
           {/* Pegawai Dropdown */}
           <label className="block space-y-1">
-            <span className="text-[10px] font-bold text-gray-400 uppercase ml-1">Pilih Rekening Pegawai</span>
+            <span className="text-[10px] font-bold text-gray-400 uppercase ml-1">Pilih Rekening Pegawai (bisa lebih dari 1)</span>
             <SearchableDropdown
               ref={dropdownRef}
               isOpen={isOpen}
@@ -448,31 +478,37 @@ export default function KwitansiForm({
               setSearchTerm={setSearchTerm}
               placeholder="-- Pilih pegawai --"
               searchPlaceholder="Cari nama atau rekening..."
-              selectedLabel={selectedPegawai
-                ? `${selectedPegawai.nama} ${selectedPegawai.rek ? `(${selectedPegawai.rek})` : ""}`
-                : ""}
+              selectedLabel={
+                (formData.penerimaList?.length || 0) > 1
+                  ? `${formData.penerimaList.length} pegawai dipilih`
+                  : selectedPegawai
+                    ? `${selectedPegawai.nama} ${selectedPegawai.rek ? `(${selectedPegawai.rek})` : ""}`
+                    : ""
+              }
               color="indigo"
             >
               {filteredPegawai.length > 0 ? (
-                filteredPegawai.map((pegawai) => (
-                  <button
-                    key={pegawai.id}
-                    type="button"
-                    onClick={() => {
-                      handlePegawaiChange(pegawai.id);
-                      setIsOpen(false);
-                      setSearchTerm("");
-                    }}
-                    className={`flex w-full flex-col items-start rounded-lg px-3 py-2 text-left transition-colors hover:bg-indigo-50/50 ${
-                      formData.pegawaiId === pegawai.id ? "bg-indigo-50 text-indigo-700" : "text-gray-700"
-                    }`}
-                  >
-                    <span className="text-sm font-semibold">{pegawai.nama}</span>
-                    {pegawai.rek && (
-                      <span className="text-[10px] text-gray-400">{String(pegawai.rek)} {pegawai.bank ? `• ${String(pegawai.bank)}` : ""}</span>
-                    )}
-                  </button>
-                ))
+                filteredPegawai.map((pegawai) => {
+                  const isPicked = (formData.penerimaList || []).some((p) => p.id === pegawai.id);
+                  return (
+                    <button
+                      key={pegawai.id}
+                      type="button"
+                      onClick={() => togglePegawai(pegawai)}
+                      className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left transition-colors hover:bg-indigo-50/50 ${
+                        isPicked ? "bg-indigo-50 text-indigo-700" : "text-gray-700"
+                      }`}
+                    >
+                      <span className="flex flex-col items-start min-w-0">
+                        <span className="text-sm font-semibold">{pegawai.nama}</span>
+                        {pegawai.rek && (
+                          <span className="text-[10px] text-gray-400">{String(pegawai.rek)} {pegawai.bank ? `• ${String(pegawai.bank)}` : ""}</span>
+                        )}
+                      </span>
+                      {isPicked && <Check size={14} className="shrink-0 text-indigo-600" />}
+                    </button>
+                  );
+                })
               ) : (
                 <div className="px-4 py-8 text-center">
                   <p className="text-xs font-medium text-gray-400">Pegawai tidak ditemukan</p>
@@ -480,6 +516,28 @@ export default function KwitansiForm({
               )}
             </SearchableDropdown>
           </label>
+
+          {/* Daftar penerima terpilih — 1 penerima = 1 halaman kwitansi saat dicetak */}
+          {formData.penerimaList?.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {formData.penerimaList.map((p) => (
+                <span
+                  key={p.id}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 pl-2.5 pr-1.5 py-1 text-[11px] font-semibold text-indigo-700"
+                >
+                  {p.nama || p.id}
+                  <button
+                    type="button"
+                    onClick={() => togglePegawai(p)}
+                    className="rounded-full p-0.5 text-indigo-400 transition-colors hover:bg-indigo-100 hover:text-indigo-700"
+                    title="Hapus penerima"
+                  >
+                    <X size={11} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {renderInput("namaRekening", "Nama di Rekening", {
@@ -495,6 +553,12 @@ export default function KwitansiForm({
               className: "w-full rounded-xl border border-gray-200 bg-gray-50/30 pl-10 pr-4 py-2.5 text-sm text-gray-900 outline-none transition-all cursor-default",
             })}
           </div>
+
+          {formData.penerimaList?.length > 1 && (
+            <p className="ml-1 text-[10px] font-medium italic text-gray-400">
+              Data di atas milik penerima pertama. Saat dicetak, tiap penerima mendapat 1 halaman kwitansi.
+            </p>
+          )}
         </div>
 
         {/* ─── Section 3: Detail Transaksi ───────────────────────── */}

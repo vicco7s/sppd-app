@@ -20,6 +20,8 @@ import { createSignedUrl } from "@/lib/supabase/createSignedUrl";
 import AdminSidebar from "@/components/dashadmin/AdminSidebar";
 import PegawaiList from "@/components/dashadmin/PegawaiList";
 import PerjadinKotaList from "@/components/dashadmin/PerjadinKotaList";
+import PerjadinLuarList from "@/components/dashadmin/PerjadinLuarList";
+import ToolsSection from "@/components/tools/ToolsSection";
 import { ArrowUpRight, BriefcaseBusiness, ChevronRight, FileText, Sparkles, Upload, Users } from "lucide-react";
 
 export default function DashadminPage() {
@@ -31,6 +33,7 @@ export default function DashadminPage() {
     const router = useRouter();
     const [user, setUser] = useState<AuthUser | null>(null);
     const [perjadinList, setPerjadinList] = useState<any[]>([]);
+    const [perjadinLuarList, setPerjadinLuarList] = useState<any[]>([]);
     const [pegawaiList, setPegawaiList] = useState<Pegawai[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
@@ -150,6 +153,14 @@ export default function DashadminPage() {
                         ...doc.data()
                     }));
                     setPerjadinList(data);
+                } else if (activeTab === "perjadin-luar-dalam-provinsi") {
+                    const q = query(collection(db, "perjadin_luar_provinsi"), orderBy("createdAt", "desc"));
+                    const querySnapshot = await getDocs(q);
+                    const data = querySnapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                    setPerjadinLuarList(data);
                 } else if (activeTab === "pegawai") {
                     const q = query(collection(db, "pegawai"), orderBy("nama", "asc"));
                     const querySnapshot = await getDocs(q);
@@ -198,6 +209,8 @@ export default function DashadminPage() {
                 await deleteDoc(doc(db, type, id));
                 if (type === "pegawai") {
                     setPegawaiList(prev => prev.filter(item => item.id !== id));
+                } else if (type === "perjadin_luar_provinsi") {
+                    setPerjadinLuarList(prev => prev.filter(item => item.id !== id));
                 } else {
                     setPerjadinList(prev => prev.filter(item => item.id !== id));
                 }
@@ -206,6 +219,17 @@ export default function DashadminPage() {
                 console.error("Error deleting document:", error);
                 toast.error("Gagal menghapus data");
             }
+        }
+    };
+
+    const handleStatusChangeLuar = async (id: string, newStatus: string) => {
+        try {
+            await updateDoc(doc(db, "perjadin_luar_provinsi", id), { status: newStatus });
+            setPerjadinLuarList(prev => prev.map(item => item.id === id ? { ...item, status: newStatus } : item));
+            toast.success(`Status berhasil diubah ke ${newStatus}`);
+        } catch (error) {
+            console.error("Error updating status:", error);
+            toast.error("Gagal mengubah status");
         }
     };
 
@@ -479,6 +503,8 @@ export default function DashadminPage() {
                             </div>
                         )}
 
+                        {activeTab === "tools" && <ToolsSection />}
+
                         {/* Content for "Kwitansi" */}
                         {activeTab === "kwitansi" && <KwitansiSection isAdmin={true} userProfile={userProfile} />}
 
@@ -527,6 +553,17 @@ export default function DashadminPage() {
                                 router={router}
                                 setPrintModalItem={setPrintModalItem}
                                 handleDelete={handleDelete}
+                            />
+                        )}
+
+                        {/* Content for "Perjadin Luar Dalam Provinsi" */}
+                        {activeTab === "perjadin-luar-dalam-provinsi" && (
+                            <PerjadinLuarList 
+                                loading={loading}
+                                perjadinList={perjadinLuarList}
+                                router={router}
+                                handleStatusChange={handleStatusChangeLuar}
+                                handleDelete={(id) => handleDelete(id, "perjadin_luar_provinsi")}
                             />
                         )}
                     </div>

@@ -18,6 +18,8 @@ import { createSignedUrl } from "@/lib/supabase/createSignedUrl";
 import UserSidebar from "@/components/dashuser/UserSidebar";
 import UserPegawaiList from "@/components/dashuser/UserPegawaiList";
 import UserPerjadinKotaList from "@/components/dashuser/UserPerjadinKotaList";
+import UserPerjadinLuarList from "@/components/dashuser/UserPerjadinLuarList";
+import ToolsSection from "@/components/tools/ToolsSection";
 import { Pegawai, User as DbUser } from "@/types";
 import { ArrowUpRight, BriefcaseBusiness, ChevronRight, FileText, Sparkles, Upload, Users } from "lucide-react";
 
@@ -28,6 +30,7 @@ export default function DashuserPage() {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [perjadinList, setPerjadinList] = useState<any[]>([]);
+  const [perjadinLuarList, setPerjadinLuarList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortOrder, setSortOrder] = useState("desc");
@@ -150,6 +153,22 @@ export default function DashuserPage() {
         } finally {
           setLoading(false);
         }
+      } else if (activeTab === "perjadin-luar-dalam-provinsi") {
+        setLoading(true);
+        try {
+          const q = query(collection(db, "perjadin_luar_provinsi"), orderBy("createdAt", "desc"));
+          const querySnapshot = await getDocs(q);
+          const data = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          setPerjadinLuarList(data);
+        } catch (error) {
+          console.error("Error fetching data:", error);
+          toast.error("Gagal mengambil data perjadin luar");
+        } finally {
+          setLoading(false);
+        }
       } else if (activeTab === "pegawai") {
         setLoading(true);
         try {
@@ -200,6 +219,8 @@ export default function DashuserPage() {
         await deleteDoc(doc(db, type, id));
         if (type === "pegawai") {
           setPegawaiList(prev => prev.filter(item => item.id !== id));
+        } else if (type === "perjadin_luar_provinsi") {
+          setPerjadinLuarList(prev => prev.filter(item => item.id !== id));
         } else {
           setPerjadinList(prev => prev.filter(item => item.id !== id));
         }
@@ -456,6 +477,8 @@ export default function DashuserPage() {
             )}
 
             {/* Content for "Kwitansi" */}
+            {activeTab === "tools" && <ToolsSection />}
+
             {activeTab === "kwitansi" && <KwitansiSection isAdmin={false} userProfile={userProfile} />}
 
             {/* Content for "Pegawai" */}
@@ -537,6 +560,17 @@ export default function DashuserPage() {
                       </div>
                     </div>
                   )}
+              </div>
+            )}
+
+            {activeTab === "perjadin-luar-dalam-provinsi" && (
+              <div className="flex-1 flex flex-col min-h-[calc(100vh-180px)] space-y-6">
+                <UserPerjadinLuarList
+                  loading={loading}
+                  perjadinList={perjadinLuarList}
+                  router={router}
+                  handleDelete={(id) => handleDelete(id, "perjadin_luar_provinsi")}
+                />
               </div>
             )}
           </div>

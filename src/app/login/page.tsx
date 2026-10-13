@@ -118,7 +118,7 @@ export default function LoginPage() {
             <div className="mb-8">
               <div className="mb-10 flex items-center gap-2 text-sm font-bold text-slate-900">
                 <span className="h-2 w-2 rounded-full bg-yellow-600" />
-                Version 4.2.0 Gemini x GLM AI
+                Version 4.3.0 Gemini 3.1 Flash x GLM 4.7 Flash
               </div>
               <h1 className="text-3xl font-bold tracking-tight text-slate-900">
                 Masuk ke akun Anda

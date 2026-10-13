@@ -109,7 +109,14 @@ export default function KwitansiTable({ items, loading, onDelete, onEdit, onTogg
                   }
                 </td>
                 <td className="px-4 py-3 border-b text-sm text-gray-700">{item.namaRekeningBelanja || "-"}</td>
-                <td className="px-4 py-3 border-b text-sm text-gray-700">{item.namaRekening || "-"}</td>
+                <td className="px-4 py-3 border-b text-sm text-gray-700">
+                  {item.namaRekening || "-"}
+                  {item.penerimaList?.length > 1 && (
+                    <span className="ml-1.5 rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-600">
+                      {item.penerimaList.length} penerima
+                    </span>
+                  )}
+                </td>
                 <td className="px-4 py-3 border-b text-sm text-gray-700">{item.nominal?.toLocaleString?.() || item.nominal || "-"}</td>
                 <td className="px-4 py-3 border-b text-sm text-gray-700">{item.tanggal || "-"}</td>
                 <td className="px-4 py-3 border-b text-sm text-center">
@@ -149,7 +156,7 @@ export default function KwitansiTable({ items, loading, onDelete, onEdit, onTogg
       </div>
       <div className="space-y-3 p-4 md:hidden">
         {loading ? <div className="rounded-xl border border-slate-200 px-4 py-10 text-center text-sm italic text-slate-500">Memuat kwitansi...</div> : items.length === 0 ? <div className="rounded-xl border border-slate-200 px-4 py-10 text-center text-sm italic text-slate-500">Belum ada kwitansi.</div> : paginatedItems.map((item, index) => (
-          <article key={item.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-4"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold text-slate-900">{item.namaRekeningBelanja || "-"}</p><p className="mt-1 truncate text-xs text-slate-500">{item.namaRekening || "-"}</p></div><span className="shrink-0 rounded-full bg-cyan-50 px-2 py-1 text-xs font-medium text-cyan-700">#{sortOrder === "desc" ? items.length - (startIndex + index) : startIndex + index + 1}</span></div><div className="mt-3 flex justify-between gap-3 text-xs"><span className="text-slate-400">Nominal</span><strong className="text-slate-700">{item.nominal?.toLocaleString?.() || item.nominal || "-"}</strong></div><div className="mt-1 flex justify-between gap-3 text-xs"><span className="text-slate-400">Tanggal</span><span className="text-slate-700">{item.tanggal || "-"}</span></div><div className="mt-4 flex gap-2 border-t border-slate-200 pt-3"><button onClick={() => onEdit(item)} className="flex-1 rounded-lg bg-amber-500 px-3 py-2 text-white" title="Edit Kwitansi"><Pencil size={15} className="mx-auto" /></button><button onClick={() => generateKwitansiPDF(item)} className="flex-1 rounded-lg bg-green-500 px-3 py-2 text-white" title="Cetak Kwitansi"><Printer size={15} className="mx-auto" /></button><button onClick={() => onDelete(item.id)} className="flex-1 rounded-lg bg-red-500 px-3 py-2 text-white" title="Hapus Kwitansi"><Trash2 size={15} className="mx-auto" /></button></div></article>
+          <article key={item.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-4"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold text-slate-900">{item.namaRekeningBelanja || "-"}</p><p className="mt-1 truncate text-xs text-slate-500">{item.namaRekening || "-"}{item.penerimaList?.length > 1 ? ` (${item.penerimaList.length} penerima)` : ""}</p></div><span className="shrink-0 rounded-full bg-cyan-50 px-2 py-1 text-xs font-medium text-cyan-700">#{sortOrder === "desc" ? items.length - (startIndex + index) : startIndex + index + 1}</span></div><div className="mt-3 flex justify-between gap-3 text-xs"><span className="text-slate-400">Nominal</span><strong className="text-slate-700">{item.nominal?.toLocaleString?.() || item.nominal || "-"}</strong></div><div className="mt-1 flex justify-between gap-3 text-xs"><span className="text-slate-400">Tanggal</span><span className="text-slate-700">{item.tanggal || "-"}</span></div><div className="mt-4 flex gap-2 border-t border-slate-200 pt-3"><button onClick={() => onEdit(item)} className="flex-1 rounded-lg bg-amber-500 px-3 py-2 text-white" title="Edit Kwitansi"><Pencil size={15} className="mx-auto" /></button><button onClick={() => generateKwitansiPDF(item)} className="flex-1 rounded-lg bg-green-500 px-3 py-2 text-white" title="Cetak Kwitansi"><Printer size={15} className="mx-auto" /></button><button onClick={() => onDelete(item.id)} className="flex-1 rounded-lg bg-red-500 px-3 py-2 text-white" title="Hapus Kwitansi"><Trash2 size={15} className="mx-auto" /></button></div></article>
         ))}
       </div>
       {/* Pagination Controls */}

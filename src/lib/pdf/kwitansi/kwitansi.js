@@ -44,16 +44,11 @@ function terbilang(n) {
     return String(n);
 }
 
-export async function generateKwitansiPDF(data) {
-    // Fetch detailed pegawai data to get NIP
-    const pegawaiData = await fetchPegawai(data.pegawaiId);
-    
-    const pdfDoc = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: [215, 330], // F4 size
-    });
-
+/**
+ * Gambar satu halaman kwitansi untuk satu penerima.
+ * penerima: { id, nama, rek, bank }
+ */
+function drawKwitansiPage(pdfDoc, data, penerima, pegawaiData) {
     const marginLeft = 15;
     const marginRight = 15;
     const pageWidth = 215;
@@ -137,9 +132,9 @@ export async function generateKwitansiPDF(data) {
         return yPos + 5;
     };
 
-    y = drawRecipientRow("Nama Rekening", data.namaRekening, y);
-    y = drawRecipientRow("Nomor Rekening", data.nomorRekening, y);
-    y = drawRecipientRow("Nama Bank", data.namaBank, y);
+    y = drawRecipientRow("Nama Rekening", penerima.nama, y);
+    y = drawRecipientRow("Nomor Rekening", penerima.rek, y);
+    y = drawRecipientRow("Nama Bank", penerima.bank, y);
 
     y += 5;
     // Financial Details
@@ -231,7 +226,7 @@ export async function generateKwitansiPDF(data) {
 
     // Recipient Name
     pdfDoc.setFont("helvetica", "bold");
-    pdfDoc.text(data.namaRekening?.toUpperCase() || "-", marginLeft + boxWidth + boxWidth / 2, y + boxHeight - 7, { align: "center" });
+    pdfDoc.text(penerima.nama?.toUpperCase() || "-", marginLeft + boxWidth + boxWidth / 2, y + boxHeight - 7, { align: "center" });
     pdfDoc.setFont("helvetica", "normal");
     
     // Show NIP from fetched pegawai data
@@ -262,6 +257,31 @@ export async function generateKwitansiPDF(data) {
     pdfDoc.text("Siswanto", marginLeft + boxWidth + boxWidth / 2, y + boxHeight + 3, { align: "center" });
     pdfDoc.setFont("helvetica", "normal");
     pdfDoc.text("NIP. 196905102009061006", marginLeft + boxWidth + boxWidth / 2, y + boxHeight + 7, { align: "center" });
+}
+
+/**
+ * Cetak kwitansi. Bila data.penerimaList berisi lebih dari satu penerima,
+ * tiap penerima digambar pada halaman terpisah (nominal & keperluan sama).
+ */
+export async function generateKwitansiPDF(data) {
+    const pdfDoc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: [215, 330], // F4 size
+    });
+
+    // Data lama (satu penerima, tanpa penerimaList) tetap didukung
+    const penerimaList = Array.isArray(data.penerimaList) && data.penerimaList.length > 0
+        ? data.penerimaList
+        : [{ id: data.pegawaiId, nama: data.namaRekening, rek: data.nomorRekening, bank: data.namaBank }];
+
+    for (let i = 0; i < penerimaList.length; i++) {
+        if (i > 0) pdfDoc.addPage();
+        const penerima = penerimaList[i];
+        // Fetch detailed pegawai data to get NIP
+        const pegawaiData = await fetchPegawai(penerima.id);
+        drawKwitansiPage(pdfDoc, data, penerima, pegawaiData);
+    }
 
     // Output
     const pdfBlob = pdfDoc.output("blob");
